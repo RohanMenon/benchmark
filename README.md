@@ -1,469 +1,250 @@
-# robot_lab
+# Robot Lab - Isaac Sim 仿真场景
 
-[![IsaacSim](https://img.shields.io/badge/IsaacSim-5.1.0-silver.svg)](https://docs.omniverse.nvidia.com/isaacsim/latest/overview.html)
-[![Isaac Lab](https://img.shields.io/badge/IsaacLab-2.3.2-silver)](https://isaac-sim.github.io/IsaacLab)
-[![Python](https://img.shields.io/badge/python-3.11-blue.svg)](https://docs.python.org/3/whatsnew/3.11.html)
-[![Linux platform](https://img.shields.io/badge/platform-linux--64-orange.svg)](https://releases.ubuntu.com/22.04/)
-[![Windows platform](https://img.shields.io/badge/platform-windows--64-orange.svg)](https://www.microsoft.com/en-us/)
-[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://pre-commit.com/)
-[![License](https://img.shields.io/badge/license-Apache2.0-yellow.svg)](https://opensource.org/license/apache-2-0)
+基于 Isaac Lab 的移动双臂机器人仿真项目，包含场景设计、键盘控制等功能。
 
-## Overview
+## 项目结构
 
-**robot_lab** is a RL extension library for robots, based on IsaacLab. It allows you to develop in an isolated environment, outside of the core Isaac Lab repository.
+```
+robot_lab/
+├── assets/                          # 资源文件
+│   ├── table_edit.usd              # 桌子模型
+│   ├── A_edit.usd ~ I_edit.usd     # 字母A-I模型
+│   ├── bowl.usd                    # 碗模型
+│   ├── plate.usd                   # 盘子模型
+│   ├── spoon.usd                   # 勺子模型
+│   ├── complete_scene_11_tables.usd           # 保存的完整场景（11桌）
+│   └── complete_scene_with_robot_keyboard.usd # 保存的机器人场景
+├── keyboard_control.py             # 原始键盘控制脚本（单机器人）
+├── scene_11_tables.py              # 11个桌子 + 9个字母 + 3个餐具
+├── scene_robot_tables.py           # 10个桌子 + 机器人（无控制）
+├── scene_robot_keyboard.py         # 完整场景 + 键盘控制 ⭐推荐
+├── test_table_letter.py            # 测试脚本：单桌子 + 字母A
+├── test_table_cutlery.py           # 测试脚本：单桌子 + 3个餐具
+└── inspect_usd.py                  # USD文件检查工具
+```
 
-The table below lists all available environments:
+## 主要脚本说明
 
-| Category   | Robot Model         | Environment Name (<ENV_NAME>)                                      | Screenshot |
-|------------|---------------------|------------------------------------------------------------|------------|
-| **Quadruped** | [Anymal D](https://www.anybotics.com/robotics/anymal) | RobotLab-Isaac-Velocity-Rough-Anymal-D-v0 | <img src="./docs/imgs/anymal_d.png" alt="anymal_d" width="75"> |
-|            | [Unitree Go2](https://www.unitree.com/go2) | RobotLab-Isaac-Velocity-Rough-Unitree-Go2-v0 | <img src="./docs/imgs/unitree_go2.png" alt="unitree_go2" width="75"> |
-|            | [Unitree B2](https://www.unitree.com/b2) | RobotLab-Isaac-Velocity-Rough-Unitree-B2-v0 | <img src="./docs/imgs/unitree_b2.png" alt="unitree_b2" width="75"> |
-|            | [Unitree A1](https://www.unitree.com/a1) | RobotLab-Isaac-Velocity-Rough-Unitree-A1-v0 | <img src="./docs/imgs/unitree_a1.png" alt="unitree_a1" width="75"> |
-|            | [Deeprobotics Lite3](https://www.deeprobotics.cn/robot/index/product1.html) | RobotLab-Isaac-Velocity-Rough-Deeprobotics-Lite3-v0 | <img src="./docs/imgs/deeprobotics_lite3.png" alt="Lite3" width="75"> |
-|            | [Zsibot ZSL1](https://www.zsibot.com/zsl1) | RobotLab-Isaac-Velocity-Rough-Zsibot-ZSL1-v0 | <img src="./docs/imgs/zsibot_zsl1.png" alt="zsibot_zsl1" width="75"> |
-|            | [Magiclab MagicDog](https://www.magiclab.top/dog) | RobotLab-Isaac-Velocity-Rough-MagicLab-Dog-v0 | <img src="./docs/imgs/magiclab_magicdog.png" alt="magiclab_magicdog" width="75"> |
-| **Wheeled** | [Unitree Go2W](https://www.unitree.com/go2-w) | RobotLab-Isaac-Velocity-Rough-Unitree-Go2W-v0 | <img src="./docs/imgs/unitree_go2w.png" alt="unitree_go2w" width="75"> |
-|            | [Unitree B2W](https://www.unitree.com/b2-w) | RobotLab-Isaac-Velocity-Rough-Unitree-B2W-v0 | <img src="./docs/imgs/unitree_b2w.png" alt="unitree_b2w" width="75"> |
-|            | [Deeprobotics M20](https://www.deeprobotics.cn/robot/index/lynx.html) | RobotLab-Isaac-Velocity-Rough-Deeprobotics-M20-v0 | <img src="./docs/imgs/deeprobotics_m20.png" alt="deeprobotics_m20" width="75"> |
-|            | [DDTRobot Tita](https://directdrive.com/product_TITA) | RobotLab-Isaac-Velocity-Rough-DDTRobot-Tita-v0 | <img src="./docs/imgs/ddtrobot_tita.png" alt="ddtrobot_tita" width="75"> |
-|            | [Zsibot ZSL1W](https://www.zsibot.com/zsl1) | RobotLab-Isaac-Velocity-Rough-Zsibot-ZSL1W-v0 | <img src="./docs/imgs/zsibot_zsl1w.png" alt="zsibot_zsl1w" width="75"> |
-|            | [Magiclab MagicDog-W](https://www.magiclab.top/dog-w) | RobotLab-Isaac-Velocity-Rough-MagicLab-Dog-W-v0 | <img src="./docs/imgs/magiclab_magicdog_w.png" alt="magiclab_magicdog_w" width="75"> |
-| **Humanoid** | [Unitree G1](https://www.unitree.com/g1) | RobotLab-Isaac-Velocity-Rough-Unitree-G1-v0 | <img src="./docs/imgs/unitree_g1.png" alt="unitree_g1" width="75"> |
-|             | [Unitree H1](https://www.unitree.com/h1) | RobotLab-Isaac-Velocity-Rough-Unitree-H1-v0 | <img src="./docs/imgs/unitree_h1.png" alt="unitree_h1" width="75"> |
-|             | [FFTAI GR1T1](https://www.fftai.com/products-gr1) | RobotLab-Isaac-Velocity-Rough-FFTAI-GR1T1-v0 | <img src="./docs/imgs/fftai_gr1t1.png" alt="fftai_gr1t1" width="75"> |
-|             | [FFTAI GR1T2](https://www.fftai.com/products-gr1) | RobotLab-Isaac-Velocity-Rough-FFTAI-GR1T2-v0 | <img src="./docs/imgs/fftai_gr1t2.png" alt="fftai_gr1t2" width="75"> |
-|             | [Booster T1](https://www.boosterobotics.com/) | RobotLab-Isaac-Velocity-Rough-Booster-T1-v0 | <img src="./docs/imgs/booster_t1.png" alt="booster_t1" width="75"> |
-|             | [RobotEra Xbot](https://www.robotera.com/) | RobotLab-Isaac-Velocity-Rough-RobotEra-Xbot-v0 | <img src="./docs/imgs/robotera_xbot.png" alt="robotera_xbot" width="75"> |
-|             | [Openloong Loong](https://www.openloong.net/) | RobotLab-Isaac-Velocity-Rough-Openloong-Loong-v0 | <img src="./docs/imgs/openloong_loong.png" alt="openloong_loong" width="75"> |
-|             | [RoboParty ATOM01](https://roboparty.cn/) | RobotLab-Isaac-Velocity-Rough-RoboParty-ATOM01-v0 | <img src="./docs/imgs/roboparty_atom01.png" alt="roboparty_atom01" width="75"> |
-|             | [Magiclab MagicBot-Gen1](https://www.magiclab.top/human) | RobotLab-Isaac-Velocity-Rough-MagicLab-Bot-Gen1-v0 | <img src="./docs/imgs/magiclab_magicbot_gen1.png" alt="magiclab_magicbot_gen1" width="75"> |
-|             | [Magiclab MagicBot-Z1](https://www.magiclab.top/z1) | RobotLab-Isaac-Velocity-Rough-MagicLab-Bot-Z1-v0 | <img src="./docs/imgs/magiclab_magicbot_z1.png" alt="magiclab_magicbot_z1" width="75"> |
+### 1. `scene_robot_keyboard.py` ⭐推荐
+**完整场景 + 键盘控制**
 
-> [!NOTE]
-> If you want to run policy in gazebo or real robot, please use [rl_sar](https://github.com/fan-ziqi/rl_sar) project.
->
-> Discuss in [Github Discussion](https://github.com/fan-ziqi/robot_lab/discussions) or [Discord](http://www.robotsfan.com/dc_robot_lab).
+包含完整的仿真环境：
+- 10个桌子（摆放成两列）
+- 9个字母（A-I，黑色）
+- 3个餐具（红碗/黄盘/蓝勺）
+- 1个可控移动双臂机器人
 
-## Version Dependency
+**运行方式：**
+```bash
+source ~/.bashrc && conda activate isaaclab && python scene_robot_keyboard.py
+```
 
-| robot_lab Version | Isaac Lab Version             | Isaac Sim Version         |
-|------------------ | ----------------------------- | ------------------------- |
-| `main` branch     | `main` branch                 | Isaac Sim 4.5 / 5.0 / 5.1 |
-| `v2.3.2`          | `v2.3.2`                      | Isaac Sim 4.5 / 5.0 / 5.1 |
-| `v2.2.2`          | `v2.2.1`                      | Isaac Sim 4.5 / 5.0       |
-| `v2.1.1`          | `v2.1.1`                      | Isaac Sim 4.5             |
-| `v1.1`            | `v1.4.1`                      | Isaac Sim 4.2             |
+**键盘控制：**
+- `W` - 向前移动
+- `S` - 向后移动
+- `A` - 向左转（自动前进）
+- `D` - 向右转（自动前进）
+- `ESC` / `Ctrl+C` - 退出
 
-## Installation
+**特性：**
+- 无需点击窗口即可控制（使用pynput）
+- 机器人初始姿态稳定（机械臂收起）
+- 自动在1000步后保存场景为USD文件
 
-- Install Isaac Lab by following the [installation guide](https://isaac-sim.github.io/IsaacLab/main/source/setup/installation/index.html). We recommend using the conda installation as it simplifies calling Python scripts from the terminal.
+---
 
-- Clone this repository separately from the Isaac Lab installation (i.e. outside the `IsaacLab` directory):
+### 2. `scene_11_tables.py`
+**11个桌子布局场景**
 
-  ```bash
-  git clone https://github.com/fan-ziqi/robot_lab.git
-  ```
+包含11个桌子 + 9个字母 + 3个餐具，无机器人。
 
-- Using a python interpreter that has Isaac Lab installed, install the library
+**运行方式：**
+```bash
+source ~/.bashrc && conda activate isaaclab && python scene_11_tables.py
+```
 
-  ```bash
-  python -m pip install -e source/robot_lab
-  ```
+**布局：**
+- 左列5个桌子：餐具桌（含碗/盘/勺）、A、C、E、G
+- 右列5个桌子：空桌、B、D、F、H
+- 顶部中间：空桌
+- 底部中间：I
 
-- Verify that the extension is correctly installed by running the following command to print all the available environments in the extension:
+---
 
-  ```bash
-  python scripts/tools/list_envs.py
-  ```
+### 3. `keyboard_control.py`
+**原始键盘控制脚本**
 
-<details>
+仅包含单个移动双臂机器人，用于测试基础控制功能。
 
-<summary>Set up IDE (Optional, click to expand)</summary>
+**运行方式：**
+```bash
+source ~/.bashrc && conda activate isaaclab && python keyboard_control.py
+```
 
-To setup the IDE, please follow these instructions:
+---
 
-- Run VSCode Tasks, by pressing `Ctrl+Shift+P`, selecting `Tasks: Run Task` and running the `setup_python_env` in the drop down menu. When running this task, you will be prompted to add the absolute path to your Isaac Sim installation.
+### 4. 测试脚本
 
-If everything executes correctly, it should create a file .python.env in the `.vscode` directory. The file contains the python paths to all the extensions provided by Isaac Sim and Omniverse. This helps in indexing all the python modules for intelligent suggestions while writing code.
+#### `test_table_letter.py`
+测试单个桌子和字母A的摆放、缩放、旋转。
 
-</details>
+#### `test_table_cutlery.py`
+测试单个桌子和3个餐具的摆放、旋转、颜色。
 
-<details>
+**运行方式：**
+```bash
+source ~/.bashrc && conda activate isaaclab && python test_table_letter.py
+source ~/.bashrc && conda activate isaaclab && python test_table_cutlery.py
+```
 
-<summary>Setup as Omniverse Extension (Optional, click to expand)</summary>
+---
 
-We provide an example UI extension that will load upon enabling your extension defined in `source/robot_lab/robot_lab/ui_extension_example.py`.
+## 资源文件配置参数
 
-To enable your extension, follow these steps:
+### 桌子（table_edit.usd）
+- **Scale**: `(0.001, 0.001, 0.001)`
+- **Rotation**: `(0.7071, 0.7071, 0.0, 0.0)` - X轴90度 + Y轴180度，让桌子站立
+- **Z Position**: `0.7` - 桌腿在地面上
 
-1. **Add the search path of your repository** to the extension manager:
-    - Navigate to the extension manager using `Window` -> `Extensions`.
-    - Click on the **Hamburger Icon** (☰), then go to `Settings`.
-    - In the `Extension Search Paths`, enter the absolute path to `robot_lab/source`
-    - If not already present, in the `Extension Search Paths`, enter the path that leads to Isaac Lab's extension directory directory (`IsaacLab/source`)
-    - Click on the **Hamburger Icon** (☰), then click `Refresh`.
+### 字母（A_edit.usd ~ I_edit.usd）
+- **Scale**: `(0.001, 0.001, 0.001)`
+- **Rotation**: `(0.7071, 0.7071, 0.0, 0.0)` - X轴90度 + Y轴180度，平放在桌面
+- **Color**: 黑色 `(0.0, 0.0, 0.0)`
+- **Position Offset**: 
+  - 相对桌子中心：X +0.35, Y -0.45
+  - Z高度：桌子Z + 0.061 = 0.761
 
-2. **Search and enable your extension**:
-    - Find your extension under the `Third Party` category.
-    - Toggle it to enable your extension.
+### 餐具（bowl.usd, plate.usd, spoon.usd）
+- **Scale**: `(0.001, 0.001, 0.001)`
+- **Colors**:
+  - Bowl（碗）: 红色 `(1.0, 0.0, 0.0)`
+  - Plate（盘子）: 黄色 `(1.0, 1.0, 0.0)`
+  - Spoon（勺子）: 蓝色 `(0.0, 0.0, 1.0)`
+- **Rotations**:
+  - Bowl: X轴90度 + Y轴90度 `(0.5, 0.5, 0.5, 0.5)`
+  - Plate: X轴90度 + Y轴90度 `(0.5, 0.5, 0.5, 0.5)`
+  - Spoon: Y轴90度 `(0.0, 0.7071, 0.0, 0.7071)`
+- **Position Offsets** (相对餐具桌):
+  - Bowl: X +0.45, Y -0.3, Z +0.15
+  - Plate: X +0.2, Y -0.3, Z +0.08
+  - Spoon: X +0.4, Y -0.3, Z +0.07
 
-</details>
+### 机器人（mobile_fr3_duo_v0_2_franka_hand.usd）
+- **Position**: `(0.0, 4.5, 0.0)` - 顶部中间位置
+- **Initial Joint Config**: 双臂收起姿态，防止前倾
+- **Actuators**:
+  - 转向关节：位置控制（高刚度）
+  - 驱动轮：速度控制（低刚度）
+  - 机械臂：位置控制（中等刚度）
 
-## Docker setup
+---
 
-<details>
+## 技术要点
 
-<summary>Click to expand</summary>
+### 1. 坐标系统
+- **X轴**: 左右方向（左负右正）
+- **Y轴**: 前后方向（后负前正）
+- **Z轴**: 上下方向（下负上正）
 
-### Building Isaac Lab Base Image
+### 2. 旋转表示
+使用四元数 `(x, y, z, w)` 表示旋转：
+- X轴90度: `(0.7071, 0.0, 0.0, 0.7071)`
+- Y轴90度: `(0.0, 0.7071, 0.0, 0.7071)`
+- X90+Y90: `(0.5, 0.5, 0.5, 0.5)`
+- X90+Y180: `(0.7071, 0.7071, 0.0, 0.0)`
 
-Currently, we don't have the Docker for Isaac Lab publicly available. Hence, you'd need to build the docker image
-for Isaac Lab locally by following the steps [here](https://isaac-sim.github.io/IsaacLab/main/source/deployment/index.html).
+### 3. 物理稳定性
+- 桌子和字母使用 `AssetBaseCfg`（静态装饰物，无刚体）
+- 餐具在测试中禁用刚体避免碰撞弹飞
+- 机器人使用 `ArticulationCfg`（带执行器的铰接体）
 
-Once you have built the base Isaac Lab image, you can check it exists by doing:
+### 4. 保存场景
+场景在运行1000步后自动保存为USD文件，可直接在Isaac Sim中打开查看。
+
+---
+
+## 环境要求
+
+- **Isaac Sim**: 2023.1 或更高版本
+- **Isaac Lab**: 0.54.3
+- **Python**: 3.8+
+- **依赖**: `pynput`（键盘控制）
 
 ```bash
-docker images
-
-# Output should look something like:
-#
-# REPOSITORY                       TAG       IMAGE ID       CREATED          SIZE
-# isaac-lab-base                   latest    28be62af627e   32 minutes ago   18.9GB
+pip install pynput
 ```
 
-### Building robot_lab Image
+---
 
-Following above, you can build the docker container for this project. It is called `robot-lab`. However,
-you can modify this name inside the [`docker/docker-compose.yaml`](docker/docker-compose.yaml).
+## 使用流程
 
+### 快速开始
 ```bash
-cd docker
-docker compose --env-file .env.base --file docker-compose.yaml build robot-lab
+# 激活环境
+conda activate isaaclab
+
+# 运行完整场景 + 键盘控制
+python scene_robot_keyboard.py
 ```
 
-You can verify the image is built successfully using the same command as earlier:
+### 场景开发流程
+1. **测试单个资源**: 使用 `test_table_letter.py` 或 `test_table_cutlery.py` 调试单个物体的位置、旋转、缩放
+2. **组装场景**: 使用 `scene_11_tables.py` 组装多个物体
+3. **添加机器人**: 使用 `scene_robot_tables.py` 或 `scene_robot_keyboard.py`
+4. **保存场景**: 脚本会自动保存USD文件到 `assets/` 目录
 
-```bash
-docker images
+---
 
-# Output should look something like:
-#
-# REPOSITORY                       TAG       IMAGE ID       CREATED             SIZE
-# robot-lab                        latest    00b00b647e1b   2 minutes ago       18.9GB
-# isaac-lab-base                   latest    892938acb55c   About an hour ago   18.9GB
-```
+## 故障排查
 
-### Running the container
+### 问题1: 物体弹飞
+**原因**: 初始位置与其他物体发生碰撞
+**解决**: 
+- 提高初始Z坐标，让物体从高处下落
+- 或使用 `AssetBaseCfg` 将物体设为静态（无物理）
 
-After building, the usual next step is to start the containers associated with your services. You can do this with:
+### 问题2: 机器人前倾
+**原因**: 机械臂初始姿态重心前倾
+**解决**: 在 `initial_joint_pos` 中设置机械臂收起姿态
 
-```bash
-docker compose --env-file .env.base --file docker-compose.yaml up
-```
+### 问题3: 键盘控制无响应
+**原因**: 需要安装 `pynput` 库
+**解决**: `pip install pynput`
 
-This will start the services defined in your `docker-compose.yaml` file, including robot-lab.
+### 问题4: 场景全黑
+**原因**: 光照强度不足
+**解决**: 增加 `DomeLightCfg` 的 `intensity` 参数，或添加额外的 `DistantLightCfg`
 
-If you want to run it in detached mode (in the background), use:
+---
 
-```bash
-docker compose --env-file .env.base --file docker-compose.yaml up -d
-```
+## 开发笔记
 
-### Interacting with a running container
+### 资源导入流程
+1. 从Blender/CAD导出URDF
+2. 使用Isaac Sim将URDF转换为USD
+3. 在GUI中调整scale、rotation
+4. 保存为 `*_edit.usd`
+5. 在Python脚本中使用 `UsdFileCfg` 加载
 
-If you want to run commands inside the running container, you can use the `exec` command:
+### 场景组合策略
+- 静态装饰物（桌子、字母）：使用 `AssetBaseCfg`
+- 动态物体（餐具）：使用 `RigidObjectCfg` 或 `AssetBaseCfg`
+- 机器人：使用 `ArticulationCfg` + `actuators`
 
-```bash
-docker exec --interactive --tty -e DISPLAY=${DISPLAY} robot-lab /bin/bash
-```
+---
 
-### Shutting down the container
+## 参考资料
 
-When you are done or want to stop the running containers, you can bring down the services:
+- [Isaac Lab Documentation](https://isaac-sim.github.io/IsaacLab/)
+- [Isaac Sim USD Reference](https://docs.omniverse.nvidia.com/isaacsim/latest/index.html)
+- [pynput Documentation](https://pynput.readthedocs.io/)
 
-```bash
-docker compose --env-file .env.base --file docker-compose.yaml down
-```
+---
 
-This stops and removes the containers, but keeps the images.
+## 作者
 
-</details>
+Ju Dong - 2026年3月
 
-## Try examples
+## 许可证
 
-You can use the following commands to run all environments:
-
-RSL-RL:
-
-```bash
-# Train
-python scripts/reinforcement_learning/rsl_rl/train.py --task=<TASK_NAME> --headless
-
-# Play
-python scripts/reinforcement_learning/rsl_rl/play.py --task=<TASK_NAME>
-```
-
-CusRL (**Experimental**):
-
-```bash
-# Train
-python scripts/reinforcement_learning/cusrl/train.py --task=<TASK_NAME> --headless
-
-# Play
-python scripts/reinforcement_learning/cusrl/play.py --task=<TASK_NAME>
-```
-
-Running a task with dummy agents (These include dummy agents that output zero or random agents. They are useful to ensure that the environments are configured correctly):
-
-```bash
-# Zero-action agent
-python scripts/tools/zero_agent.py --task=<TASK_NAME>
-# Random-action agent
-python scripts/tools/random_agent.py --task=<TASK_NAME>
-```
-
-BeyondMimic for Unitree G1:
-
-- Gather the reference motion datasets (please follow the original licenses), we use the same convention as .csv of Unitree's dataset
-
-  - Unitree-retargeted LAFAN1 Dataset is available
-    on [HuggingFace](https://huggingface.co/datasets/lvhaidong/LAFAN1_Retargeting_Dataset)
-  - Sidekicks are from [KungfuBot](https://kungfu-bot.github.io/)
-  - Christiano Ronaldo celebration is from [ASAP](https://github.com/LeCAR-Lab/ASAP).
-  - Balance motions are from [HuB](https://hub-robot.github.io/)
-
-- Convert retargeted motions to include the maximum coordinates information (body pose, body velocity, and body acceleration) via forward kinematics
-
-  ```bash
-  python scripts/tools/beyondmimic/csv_to_npz.py -f path_to_input.csv --input_fps 60 --headless
-  ```
-
-- Replaying the motion in Isaac Sim:
-
-  ```bash
-  python scripts/tools/beyondmimic/replay_npz.py -f path_to_motion.npz
-  ```
-
-- Training and Evaluation
-
-  ```bash
-  # Train
-  python scripts/reinforcement_learning/rsl_rl/train.py --task=RobotLab-Isaac-BeyondMimic-Flat-Unitree-G1-v0 --headless
-
-  # Play
-  python scripts/reinforcement_learning/rsl_rl/play.py --task=RobotLab-Isaac-BeyondMimic-Flat-Unitree-G1-v0 --num_envs 2
-  ```
-
-Others (**Experimental**)
-
-- Train AMP Dance for Unitree G1
-
-  ```bash
-  # Train
-  python scripts/reinforcement_learning/skrl/train.py --task=RobotLab-Isaac-G1-AMP-Dance-Direct-v0 --algorithm AMP --headless
-
-  # Play
-  python scripts/reinforcement_learning/skrl/play.py --task=RobotLab-Isaac-G1-AMP-Dance-Direct-v0 --algorithm AMP --num_envs=32
-  ```
-
-- Train Handstand for Unitree A1
-
-  ```bash
-  # Train
-  python scripts/reinforcement_learning/rsl_rl/train.py --task=RobotLab-Isaac-Velocity-Flat-HandStand-Unitree-A1-v0 --headless
-
-  # Play
-  python scripts/reinforcement_learning/rsl_rl/play.py --task=RobotLab-Isaac-Velocity-Flat-HandStand-Unitree-A1-v0
-  ```
-
-- Train Anymal D with symmetry
-
-  ```bash
-  # Train
-  python scripts/reinforcement_learning/rsl_rl/train.py --task=RobotLab-Isaac-Velocity-Rough-Anymal-D-v0 --headless --agent=rsl_rl_with_symmetry_cfg_entry_point --run_name=ppo_with_symmetry_data_augmentation agent.algorithm.symmetry_cfg.use_data_augmentation=true
-
-  # Play
-  python scripts/reinforcement_learning/rsl_rl/play.py --task=RobotLab-Isaac-Velocity-Rough-Anymal-D-v0 --agent=rsl_rl_with_symmetry_cfg_entry_point --run_name=ppo_with_symmetry_data_augmentation agent.algorithm.symmetry_cfg.use_data_augmentation=true
-  ```
-
-- Training and distilling Anymal D
-
-  ```bash
-  # Train the teacher agent
-  python scripts/reinforcement_learning/rsl_rl/train.py --task=RobotLab-Isaac-Velocity-Flat-Anymal-D-v0 --headless
-
-  # Distill the teacher agent into a student agent
-  python scripts/reinforcement_learning/rsl_rl/train.py --task=RobotLab-Isaac-Velocity-Flat-Anymal-D-v0 --headless --agent=rsl_rl_distillation_cfg_entry_point --load_run teacher_run_folder_name
-
-  # Play the student agent
-  python scripts/reinforcement_learning/rsl_rl/play.py --task=RobotLab-Isaac-Velocity-Flat-Anymal-D-v0 --num_envs 64 --agent rsl_rl_distillation_cfg_entry_point
-  ```
-
-> [!NOTE]
-> If you want to control a **SINGLE ROBOT** with the keyboard during playback, add `--keyboard` at the end of the play script.
->
-> ```
-> Key bindings:
-> ====================== ========================= ========================
-> Command                Key (+ve axis)            Key (-ve axis)
-> ====================== ========================= ========================
-> Move along x-axis      Numpad 8 / Arrow Up       Numpad 2 / Arrow Down
-> Move along y-axis      Numpad 4 / Arrow Right    Numpad 6 / Arrow Left
-> Rotate along z-axis    Numpad 7 / Z              Numpad 9 / X
-> ====================== ========================= ========================
-> ```
-
-* You can change `Rough` to `Flat` in the above configs.
-* Record video of a trained agent (requires installing `ffmpeg`), add `--video --video_length 200`
-* Play/Train with 32 environments, add `--num_envs 32`
-* Play on specific folder or checkpoint, add `--load_run run_folder_name --checkpoint /PATH/TO/model.pt`
-* Resume training from folder or checkpoint, add `--resume --load_run run_folder_name --checkpoint /PATH/TO/model.pt`
-* To train with multiple GPUs, use the following command, where --nproc_per_node represents the number of available GPUs:
-    ```bash
-    python -m torch.distributed.run --nnodes=1 --nproc_per_node=2 scripts/reinforcement_learning/rsl_rl/train.py --task=<TASK_NAME> --headless --distributed
-    ```
-* To scale up training beyond multiple GPUs on a single machine, it is also possible to train across multiple nodes. To train across multiple nodes/machines, it is required to launch an individual process on each node.
-
-    For the master node, use the following command, where --nproc_per_node represents the number of available GPUs, and --nnodes represents the number of nodes:
-    ```bash
-    python -m torch.distributed.run --nproc_per_node=2 --nnodes=2 --node_rank=0 --rdzv_id=123 --rdzv_backend=c10d --rdzv_endpoint=localhost:5555 scripts/reinforcement_learning/rsl_rl/train.py --task=<TASK_NAME> --headless --distributed
-    ```
-    Note that the port (`5555`) can be replaced with any other available port.
-    For non-master nodes, use the following command, replacing `--node_rank` with the index of each machine:
-    ```bash
-    python -m torch.distributed.run --nproc_per_node=2 --nnodes=2 --node_rank=1 --rdzv_id=123 --rdzv_backend=c10d --rdzv_endpoint=ip_of_master_machine:5555 scripts/reinforcement_learning/rsl_rl/train.py --task=<TASK_NAME> --headless --distributed
-    ```
-
-## Add your own robot
-
-Using the core framework developed as part of Isaac Lab, we provide various learning environments for robotics research.
-These environments follow the `gym.Env` API from OpenAI Gym version `0.21.0`. The environments are registered using
-the Gym registry.
-
-Each environment's name is composed of `Isaac-<Task>-<Robot>-v<X>`, where `<Task>` indicates the skill to learn
-in the environment, `<Robot>` indicates the embodiment of the acting agent, and `<X>` represents the version of
-the environment (which can be used to suggest different observation or action spaces).
-
-The environments are configured using either Python classes (wrapped using `configclass` decorator) or through
-YAML files. The template structure of the environment is always put at the same level as the environment file
-itself. However, its various instances are included in directories within the environment directory itself.
-This looks like as follows:
-
-```tree
-source/robot_lab/assets/
-├── __init__.py
-└── unitree.py  # <- this is where we define robot assets
-
-source/robot_lab/tasks/manager_based/locomotion/
-├── __init__.py
-└── velocity
-    ├── config
-    │   └── unitree_a1
-    │       ├── agent  # <- this is where we store the learning agent configurations
-    │       ├── __init__.py  # <- this is where we register the environment and configurations to gym registry
-    │       ├── flat_env_cfg.py
-    │       └── rough_env_cfg.py
-    ├── __init__.py
-    └── velocity_env_cfg.py  # <- this is the base task configuration
-```
-
-The environments are then registered in the `source/robot_lab/tasks/manager_based/locomotion/velocity/config/unitree_a1/__init__.py`:
-
-```python
-gym.register(
-    id="RobotLab-Isaac-Velocity-Flat-Unitree-A1-v0",
-    entry_point="isaaclab.envs:ManagerBasedRLEnv",
-    disable_env_checker=True,
-    kwargs={
-        "env_cfg_entry_point": f"{__name__}.flat_env_cfg:UnitreeA1FlatEnvCfg",
-        "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:UnitreeA1FlatPPORunnerCfg",
-        "cusrl_cfg_entry_point": f"{agents.__name__}.cusrl_ppo_cfg:UnitreeA1FlatTrainerCfg",
-    },
-)
-
-gym.register(
-    id="RobotLab-Isaac-Velocity-Rough-Unitree-A1-v0",
-    entry_point="isaaclab.envs:ManagerBasedRLEnv",
-    disable_env_checker=True,
-    kwargs={
-        "env_cfg_entry_point": f"{__name__}.rough_env_cfg:UnitreeA1RoughEnvCfg",
-        "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:UnitreeA1RoughPPORunnerCfg",
-        "cusrl_cfg_entry_point": f"{agents.__name__}.cusrl_ppo_cfg:UnitreeA1RoughTrainerCfg",
-    },
-)
-```
-
-## Tensorboard
-
-To view tensorboard, run:
-
-```bash
-tensorboard --logdir=logs
-```
-
-## Code formatting
-
-A pre-commit template is given to automatically format the code.
-
-To install pre-commit:
-
-```bash
-pip install pre-commit
-```
-
-Then you can run pre-commit with:
-
-```bash
-pre-commit run --all-files
-```
-
-## Troubleshooting
-
-### Pylance Missing Indexing of Extensions
-
-In some VsCode versions, the indexing of part of the extensions is missing. In this case, add the path to your extension in `.vscode/settings.json` under the key `"python.analysis.extraPaths"`.
-
-**Note: Replace `<path-to-isaac-lab>` with your own IsaacLab path.**
-
-```json
-{
-    "python.languageServer": "Pylance",
-    "python.analysis.extraPaths": [
-        "${workspaceFolder}/source/robot_lab",
-        "/<path-to-isaac-lab>/source/isaaclab",
-        "/<path-to-isaac-lab>/source/isaaclab_assets",
-        "/<path-to-isaac-lab>/source/isaaclab_mimic",
-        "/<path-to-isaac-lab>/source/isaaclab_rl",
-        "/<path-to-isaac-lab>/source/isaaclab_tasks",
-    ]
-}
-```
-
-### Clean USD Caches
-
-Temporary USD files are generated in `/tmp/IsaacLab/usd_{date}_{time}_{random}` during simulation runs. These files can consume significant disk space and can be cleaned by:
-
-```bash
-rm -rf /tmp/IsaacLab/usd_*
-```
-
-## Citation
-
-Please cite the following if you use this code or parts of it:
-
-```
-@software{fan-ziqi2024robot_lab,
-  author = {Ziqi Fan},
-  title = {robot_lab: RL Extension Library for Robots, Based on IsaacLab.},
-  url = {https://github.com/fan-ziqi/robot_lab},
-  year = {2024}
-}
-```
-
-## Acknowledgements
-
-The project uses some code from the following open-source code repositories:
-
-- [linden713/humanoid_amp](https://github.com/linden713/humanoid_amp)
-- [HybridRobotics/whole_body_tracking](https://github.com/HybridRobotics/whole_body_tracking)
+MIT License
