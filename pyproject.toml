@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 [tool.ruff]
-line-length = 120
+line-length = 79
 target-version = "py310"
 
 # Exclude directories
@@ -97,12 +97,13 @@ section-order = [
 "isaaclab-tasks" = ["isaaclab_tasks"]
 
 [tool.ruff.format]
-
+quote-style = "double"
+indent-style = "space"
 docstring-code-format = true
 
 [tool.pyright]
 
-include = ["source", "scripts"]
+include = ["scripts", ".vscode/tools"]
 exclude = [
     "**/__pycache__",
     "**/_isaac_sim",
@@ -128,14 +129,18 @@ reportOptionalMemberAccess = "warning" # -> raises 8 errors
 reportPrivateUsage = "warning"
 
 
+[tool.pytest.ini_options]
+
+pythonpath = [
+    "scripts/common",
+]
+
+
 [tool.codespell]
 skip = '*.usd,*.usda,*.usdz,*.svg,*.png,_isaac_sim*,*.bib,*.css,*/_build'
 quiet-level = 0
 # the world list should always have words in lower case
 ignore-words-list = "haa,slq,collapsable,buss,reacher,thirdparty"
-
-
-[tool.pytest.ini_options]
 
 markers = [
     "isaacsim_ci: mark test to run in isaacsim ci",
