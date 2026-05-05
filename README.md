@@ -11,6 +11,7 @@ IROS_Workshop/
 ├── assets/                     # USD assets and generated scene files
 ├── docker/                     # Docker Compose runtimes for Isaac Sim and Isaac Lab
 ├── docs/                       # Images and supporting documentation assets
+├── newton/                     # Newton physics engine submodule
 ├── scripts/
 │   ├── common/                 # Shared path and control helpers
 │   ├── manual_tests/           # Small validation scenes for assets
@@ -18,11 +19,35 @@ IROS_Workshop/
 │   ├── scenes/                 # Main workshop demos and scene scripts
 │   └── tools/                  # USD composition and inspection utilities
 ├── third_party/
-│   └── franka_description/     # Vendor package boundary for future submodule conversion
-├── .gitmodules                 # Placeholder submodule metadata
+│   └── franka_description/     # Franka robot description submodule
+├── .gitmodules                 # Submodule metadata
 ├── pyproject.toml              # Repository-wide lint/type-check configuration
 └── README.md
 ```
+
+## Cloning With Submodules
+
+Clone this repository with all submodules initialized:
+
+```bash
+git clone --recurse-submodules <repository-url>
+```
+
+If the repository was already cloned without submodules, initialize them afterward:
+
+```bash
+git submodule update --init --recursive
+```
+
+To update submodules to the commits recorded by the current checkout:
+
+```bash
+git submodule update --init --recursive
+```
+
+The current submodules are:
+- `newton/`
+- `third_party/franka_description/`
 
 ## Supported Container Targets
 
@@ -267,23 +292,26 @@ python scripts/scenes/scene_robot_tables.py
 python scripts/manual_tests/test_table_cutlery.py
 ```
 
-## Franka Description Submodule Preparation
+## Submodules
 
-The robot description package now lives under:
+This repository uses Git submodules for external dependencies that should stay pinned to known commits:
 
 ```text
+newton
 third_party/franka_description
 ```
 
-The root `.gitmodules` file contains a placeholder entry for future submodule conversion. Replace the URL and re-add the directory as an actual Git submodule when the upstream repository is finalized.
+For fresh clones, use:
 
-For fresh clones in the future, the expected workflow will be:
+```bash
+git clone --recurse-submodules <repository-url>
+```
+
+For existing clones, use:
 
 ```bash
 git submodule update --init --recursive
 ```
-
-Until then, the repository still contains the directory directly under `third_party/`.
 
 ## Asset and Path Handling
 
@@ -340,8 +368,7 @@ After changes, verify the following:
 
 ## Known Follow-Up Items
 
-- Replace the placeholder `.gitmodules` URL with the real upstream repository.
-- Convert `third_party/franka_description` into a true submodule after the remote is confirmed.
+- Keep submodule URLs and pinned commits in `.gitmodules` up to date.
 - Clean any generated URDF files in `third_party/franka_description/urdfs/` that still contain absolute paths from previous machines.
 - Optionally add helper shell scripts for directory bootstrap of the Docker cache layout.
 
@@ -350,4 +377,3 @@ After changes, verify the following:
 - Isaac Sim 5.1.0 container documentation: <https://docs.isaacsim.omniverse.nvidia.com/5.1.0/installation/install_container.html>
 - Isaac Sim 6.0.0 container documentation: <https://docs.isaacsim.omniverse.nvidia.com/6.0.0/installation/install_container.html>
 - Isaac Lab Docker guide: <https://isaac-sim.github.io/IsaacLab/main/source/deployment/docker.html>
-- 桌子和字母使用 `AssetBaseCfg`（静态装饰物，无刚体）
