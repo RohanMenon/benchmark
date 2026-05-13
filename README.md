@@ -8,21 +8,21 @@ For the full developer workflow, see [`docs/developer_setup.md`](docs/developer_
 
 ```text
 IROS_Workshop/
-├── assets/                     # USD assets and generated scene files
-│   └── tabletop_task_scene_DEMO# Scene with Commandable via ROS mobile_Fr3_duo
-├── docker/                     # Docker Compose runtimes for Isaac Sim and Isaac Lab
-├── docs/                       # Images and supporting documentation assets
-├── newton/                     # Newton physics engine submodule
+├── assets/                      # USD assets and generated scene files
+│   └── tabletop_task_scene_DEMO # Scene with Commandable via ROS mobile_Fr3_duo
+├── docker/                      # Docker Compose runtimes for Isaac Sim and Isaac Lab
+├── docs/                        # Images and supporting documentation assets
+├── newton/                      # Newton physics engine submodule
 ├── scripts/
-│   ├── common/                 # Shared path and control helpers
-│   ├── manual_tests/           # Small validation scenes for assets
-│   ├── newton_examples/        # Standalone Newton quick-launch examples
-│   ├── scenes/                 # Main workshop demos and scene scripts
-│   └── tools/                  # USD composition and inspection utilities
+│   ├── common/                  # Shared path and control helpers
+│   ├── manual_tests/            # Small validation scenes for assets
+│   ├── newton_examples/         # Standalone Newton quick-launch examples
+│   ├── scenes/                  # Main workshop demos and scene scripts
+│   └── tools/                   # USD composition and inspection utilities
 ├── third_party/
-│   └── franka_description/     # Franka robot description submodule
-├── .gitmodules                 # Submodule metadata
-├── pyproject.toml              # Repository-wide lint/type-check configuration
+│   └── franka_description/      # Franka robot description submodule
+├── .gitmodules                  # Submodule metadata
+├── pyproject.toml               # Repository-wide lint/type-check configuration
 └── README.md
 ```
 
