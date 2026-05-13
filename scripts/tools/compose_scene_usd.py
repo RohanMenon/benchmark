@@ -44,13 +44,16 @@ TABLE_USD = asset_path("table_edit.usd")
 BOWL_USD = asset_path("bowl2.usd")
 PLATE_USD = asset_path("plate2.usd")
 SPOON_USD = asset_path("spoon2.usd")
+HEAD_USD = asset_path("Collected_head/head.usd")
 ROBOT_USD = franka_urdf_path("mobile_fr3_duo_v0_2_franka_hand.usd")
 
 IDENTITY_ROT = (1.0, 0.0, 0.0, 0.0)
 LETTER_ROT = (0.70710678, -0.70710678, 0.0, 0.0)
+ROT_Z_90 = (0.70710678, 0.0, 0.0, 0.70710678)
 ROT_Z_180 = (0.0, 0.0, 0.0, 1.0)
 ASSET_SCALE = (1.0, 1.0, 1.0)
 TABLETOP_Z_OFFSET = 0.76
+HEAD_Y_OFFSET = -0.3
 LETTER_HEIGHT_OFFSET = -0.0097
 DEFAULT_BEAN_COLOR = (0.20, 0.12, 0.07)
 DEFAULT_BEAN_COUNT = 150
@@ -78,6 +81,7 @@ class AssetPlacement:
     rot: tuple[float, float, float, float] = (1.0, 0.0, 0.0, 0.0)
     scale: tuple[float, float, float] = (1.0, 1.0, 1.0)
     material_name: str | None = None
+    as_payload: bool = False
 
 
 @dataclass(frozen=True)
@@ -130,7 +134,9 @@ class BeanSimulationTuning:
         if self.solver_position_iterations < 1:
             raise ValueError("solver_position_iterations must be at least 1.")
         if self.solver_velocity_iterations < 0:
-            raise ValueError("solver_velocity_iterations must be non-negative.")
+            raise ValueError(
+                "solver_velocity_iterations must be non-negative."
+            )
 
 
 TABLES = [
@@ -229,6 +235,7 @@ def initialize_usd_runtime(preview: bool) -> None:
         from pxr import UsdLux as pxr_usd_lux
         from pxr import UsdPhysics as pxr_usd_physics
         from pxr import UsdShade as pxr_usd_shade
+
         try:
             from pxr import PhysxSchema as pxr_physx_schema
         except ImportError:
@@ -252,6 +259,7 @@ def initialize_usd_runtime(preview: bool) -> None:
         from pxr import UsdLux as pxr_usd_lux
         from pxr import UsdPhysics as pxr_usd_physics
         from pxr import UsdShade as pxr_usd_shade
+
         try:
             from pxr import PhysxSchema as pxr_physx_schema
         except ImportError:
@@ -274,6 +282,7 @@ def initialize_usd_runtime(preview: bool) -> None:
         from pxr import UsdLux as pxr_usd_lux
         from pxr import UsdPhysics as pxr_usd_physics
         from pxr import UsdShade as pxr_usd_shade
+
         try:
             from pxr import PhysxSchema as pxr_physx_schema
         except ImportError:
@@ -293,13 +302,14 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
             "Compose the workshop table scene as USD without Isaac Lab."
-        )
+        ),
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
         "--output",
         type=Path,
         default=DEFAULT_OUTPUT,
-        help=f"USD file to write when --save is set. Default: {DEFAULT_OUTPUT}",
+        help="USD file to write when --save is set.",
     )
     parser.add_argument(
         "--save",
@@ -345,6 +355,11 @@ def parse_args() -> argparse.Namespace:
             "Randomize cutlery placement around the cutlery table. By "
             "default, fixed poses are used."
         ),
+    )
+    parser.add_argument(
+        "--add-head",
+        action="store_true",
+        help="Add one head asset on top of each table.",
     )
     parser.add_argument(
         "--bean-count",
@@ -517,15 +532,22 @@ def add_referenced_asset(
     materials: dict[str, Any],
 ) -> Any:
     prim = UsdGeom.Xform.Define(stage, placement.prim_path).GetPrim()
+    set_xform(prim, placement.pos, placement.rot, placement.scale)
+
     asset_reference = relative_reference(placement.usd_path, output_path)
     asset_prim_path = reference_prim_path(placement.usd_path)
-    if asset_prim_path:
-        prim.GetReferences().AddReference(
-            asset_reference, Sdf.Path(asset_prim_path)
-        )
+    if placement.as_payload:
+        payloads = prim.GetPayloads()
+        if asset_prim_path:
+            payloads.AddPayload(asset_reference, Sdf.Path(asset_prim_path))
+        else:
+            payloads.AddPayload(asset_reference)
     else:
-        prim.GetReferences().AddReference(asset_reference)
-    set_xform(prim, placement.pos, placement.rot, placement.scale)
+        references = prim.GetReferences()
+        if asset_prim_path:
+            references.AddReference(asset_reference, Sdf.Path(asset_prim_path))
+        else:
+            references.AddReference(asset_reference)
 
     if placement.material_name:
         bind_material_to_gprims(prim, materials[placement.material_name])
@@ -765,7 +787,12 @@ def apply_bean_physx_tuning(prim: Any, tuning: BeanSimulationTuning) -> None:
             value,
             value_type,
         )
-    for create_method_name, attr_name, value, value_type in collision_attr_specs:
+    for (
+        create_method_name,
+        attr_name,
+        value,
+        value_type,
+    ) in collision_attr_specs:
         create_schema_attr(
             collision_api,
             prim,
@@ -990,6 +1017,52 @@ def table_placements(include_top_table: bool) -> list[AssetPlacement]:
     ]
 
 
+def head_placements(
+    tables: Iterable[AssetPlacement],
+) -> list[AssetPlacement]:
+    text_table_positions = set(LETTER_TABLE_POS.values())
+
+    def head_position(table: AssetPlacement) -> tuple[float, float, float]:
+        if table.name == "Table_Bottom_Center":
+            return (
+                table.pos[0] - HEAD_Y_OFFSET,
+                table.pos[1],
+                table.pos[2] + TABLETOP_Z_OFFSET,
+            )
+        if "_Right_" in table.name:
+            return (
+                table.pos[0],
+                table.pos[1] - HEAD_Y_OFFSET,
+                table.pos[2] + TABLETOP_Z_OFFSET,
+            )
+        return (
+            table.pos[0],
+            table.pos[1] + HEAD_Y_OFFSET,
+            table.pos[2] + TABLETOP_Z_OFFSET,
+        )
+
+    def head_rotation(table_name: str) -> tuple[float, float, float, float]:
+        if table_name == "Table_Bottom_Center":
+            return ROT_Z_90
+        if "_Right_" in table_name:
+            return ROT_Z_180
+        return IDENTITY_ROT
+
+    return [
+        AssetPlacement(
+            name=f"Head_{table.name}",
+            usd_path=HEAD_USD,
+            prim_path=f"/World/Scene/Head_{table.name}",
+            pos=head_position(table),
+            rot=head_rotation(table.name),
+            scale=ASSET_SCALE,
+            as_payload=True,
+        )
+        for table in tables
+        if table.pos in text_table_positions
+    ]
+
+
 def environment_placement(environment: str | None) -> AssetPlacement | None:
     if environment in (None, "none"):
         return None
@@ -1086,6 +1159,7 @@ def compose_scene(
     environment: str | None,
     randomize_cutlery_color: bool,
     randomize_cutlery_placement: bool,
+    add_head: bool,
     bean_count: int,
     bean_color: tuple[float, float, float],
     bean_density: float,
@@ -1103,8 +1177,11 @@ def compose_scene(
         output_path = output_path.resolve()
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
+    tables = table_placements(include_top_table)
+    heads = head_placements(tables) if add_head else []
     scene_placements = (
-        table_placements(include_top_table)
+        tables
+        + heads
         + letter_placements()
         + cutlery_placements(
             randomize_cutlery_color,
@@ -1193,10 +1270,13 @@ def compose_scene(
     environment_path = env_placement.usd_path if env_placement else "none"
     print(f"Environment: {environment_path}")
     print(f"Tables: {table_count}")
+    print(f"Heads: {len(heads)}")
     print("Letters: 9")
     print("Cutlery: 3")
     print(f"Coffee beans: {bean_count}")
-    print(f"Physics tuning: {'script defaults' if physx_scene_tuning else 'none'}")
+    print(
+        f"Physics tuning: {'script defaults' if physx_scene_tuning else 'none'}"
+    )
     print(f"Robot reference: {'yes' if with_robot else 'no'}")
     return stage
 
@@ -1219,6 +1299,7 @@ def main() -> None:
         environment=args.env,
         randomize_cutlery_color=args.randomize_cutlery_color,
         randomize_cutlery_placement=args.randomize_cutlery_placement,
+        add_head=args.add_head,
         bean_count=args.bean_count,
         bean_color=tuple(args.bean_color),
         bean_density=args.bean_density,
