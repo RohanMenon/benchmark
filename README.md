@@ -9,7 +9,7 @@ For the full developer workflow, see [`docs/developer_setup.md`](docs/developer_
 ```text
 IROS_Workshop/
 ├── assets/                     # USD assets and generated scene files
-│   └── table_task_DEMO.usd/    # Franka robot description submodule
+│   └── tabletop_task_scene_DEMO# Scene with Commandable via ROS mobile_Fr3_duo
 ├── docker/                     # Docker Compose runtimes for Isaac Sim and Isaac Lab
 ├── docs/                       # Images and supporting documentation assets
 ├── newton/                     # Newton physics engine submodule
