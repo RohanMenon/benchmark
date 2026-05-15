@@ -275,6 +275,62 @@ If GUI applications fail to open:
 - `scripts/manual_tests/test_table_cutlery.py` — validate table plus cutlery placement.
 - `scripts/manual_tests/test_table_letter.py` — validate table plus letter placement.
 
+### Manipulation tabletop_task_scene_DEMO
+
+#### 1.1 Left Sideways Translation Test
+
+The robot moves directly to the left without changing its heading.
+
+```bash
+ros2 topic pub --once /cmd_vel geometry_msgs/msg/Twist "{linear: {x: 0.0, y: 0.5, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}"
+
+```
+
+#### 1.2 Right Sideways Translation Test
+
+The robot moves directly to the right without changing its heading.
+
+```bash
+ros2 topic pub --once /cmd_vel geometry_msgs/msg/Twist "{linear: {x: 0.0, y: -0.5, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}"
+
+```
+
+#### 1.3 Diagonal 45° Movement Test
+
+Tests the smoothness of x and y-axis velocity composition. The robot should translate linearly along the diagonal.
+
+```bash
+ros2 topic pub --once /cmd_vel geometry_msgs/msg/Twist "{linear: {x: 0.5, y: 0.5, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}"
+
+```
+
+#### 1.4 "Drift" Movement Test (Translation + Rotation)
+
+The robot moves forward while translating sideways and rotating simultaneously. This tests the composite command logic.
+
+```bash
+ros2 topic pub /cmd_vel geometry_msgs/msg/Twist "{linear: {x: 0.3, y: 0.2, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.4}}"
+
+```
+
+#### 2.1 Waist Vertical Control
+
+Raises the waist vertical joint to the 0.5m position.
+
+```bash
+ros2 topic pub --once /joint_command sensor_msgs/msg/JointState "{name: ['franka_spine_vertical_joint'], position: [0.5]}"
+
+```
+
+#### 2.2 Arm Joint Control
+
+Commands the left arm's joints (joint1 and joint2) to move to the specified positions.
+
+```bash
+ros2 topic pub --once /joint_command sensor_msgs/msg/JointState "{name: ['left_fr3v2_joint1', 'left_fr3v2_joint2'], position: [0.5, -0.5]}"
+
+```
+
 ## Running Scripts
 
 Inside an Isaac Sim runtime, construct and inspect reusable USD scenes with:
