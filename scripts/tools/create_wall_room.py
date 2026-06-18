@@ -53,6 +53,12 @@ LIGHT_SIZE_PRESETS = {
     "square": (0.6, 0.6),
     "rectangle": (2.0, 0.28),
 }
+PARTITION_WIDTH = 5.0
+PARTITION_HEIGHT = 2.25
+PARTITION_THICKNESS = 0.005
+DOOR_WIDTH = 1.0
+DOOR_HEIGHT = 2.0
+DOOR_POSITION = (0.0, 2.25, 1.0)
 
 
 def initialize_usd_runtime() -> None:
@@ -90,24 +96,25 @@ def initialize_usd_runtime() -> None:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Create a simple wall room USD asset."
+        description="Create a simple wall room USD asset.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
         "--output",
         type=Path,
         default=DEFAULT_OUTPUT,
-        help=f"Output USD path. Default: {DEFAULT_OUTPUT}",
+        help="Output USD path.",
     )
     parser.add_argument(
         "--length",
         type=float,
-        default=13.5,
+        default=30.0,
         help="Inside room length along Y in meters.",
     )
     parser.add_argument(
         "--width",
         type=float,
-        default=6.0,
+        default=20.0,
         help="Inside room width along X in meters.",
     )
     parser.add_argument(
@@ -153,6 +160,11 @@ def parse_args() -> argparse.Namespace:
         default="square",
         help="Fixed ceiling light panel size preset.",
     )
+    parser.add_argument(
+        "--partition",
+        action="store_true",
+        help="Add a 5m partition wall with a 1m x 2m door opening.",
+    )
     return parser.parse_args()
 
 
@@ -161,11 +173,13 @@ def build_output_path(
     width: float,
     length: float,
     height: float,
+    partition: bool,
 ) -> Path:
     """Append integer room dimensions to the output filename stem."""
     dimension_suffix = f"{int(width)}_{int(length)}_{int(height)}"
+    partition_suffix = "_partition" if partition else ""
     return output_path.with_name(
-        f"{output_path.stem}_{dimension_suffix}{output_path.suffix}"
+        f"{output_path.stem}_{dimension_suffix}{partition_suffix}{output_path.suffix}"
     )
 
 
@@ -215,6 +229,44 @@ def add_box(
     set_cube_transform(prim, position, scale)
     UsdPhysics.CollisionAPI.Apply(prim)
     UsdShade.MaterialBindingAPI.Apply(prim).Bind(material)
+
+
+def create_partition_wall(stage: Any, material: Any) -> None:
+    door_x, door_y, door_z = DOOR_POSITION
+    side_width = (PARTITION_WIDTH - DOOR_WIDTH) / 2.0
+    if side_width <= 0.0:
+        raise ValueError("Partition width must be greater than door width.")
+
+    wall_center_z = PARTITION_HEIGHT / 2.0
+    half_door_width = DOOR_WIDTH / 2.0
+    left_center_x = door_x - half_door_width - side_width / 2.0
+    right_center_x = door_x + half_door_width + side_width / 2.0
+
+    add_box(
+        stage,
+        "/Room/Geometry/Partition_Left",
+        position=(left_center_x, door_y, wall_center_z),
+        scale=(side_width, PARTITION_THICKNESS, PARTITION_HEIGHT),
+        material=material,
+    )
+    add_box(
+        stage,
+        "/Room/Geometry/Partition_Right",
+        position=(right_center_x, door_y, wall_center_z),
+        scale=(side_width, PARTITION_THICKNESS, PARTITION_HEIGHT),
+        material=material,
+    )
+
+    header_height = PARTITION_HEIGHT - (door_z + DOOR_HEIGHT / 2.0)
+    if header_height > 0.0:
+        header_center_z = PARTITION_HEIGHT - header_height / 2.0
+        add_box(
+            stage,
+            "/Room/Geometry/Partition_Header",
+            position=(door_x, door_y, header_center_z),
+            scale=(DOOR_WIDTH, PARTITION_THICKNESS, header_height),
+            material=material,
+        )
 
 
 def create_rect_lights(
@@ -295,12 +347,14 @@ def create_room(
     ceiling: bool,
     light_density: float,
     light_size: str,
+    partition: bool,
 ) -> None:
     output_path = build_output_path(
         output_path.resolve(),
         width,
         length,
         height,
+        partition,
     )
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -373,6 +427,9 @@ def create_room(
             material=material,
         )
 
+    if partition:
+        create_partition_wall(stage, material)
+
     light_count = create_rect_lights(
         stage,
         width=width,
@@ -389,6 +446,13 @@ def create_room(
     print(f"Material preset: {material_preset}")
     print(f"Walls: {'no' if floor_only else 'yes'}")
     print(f"Ceiling: {'yes' if ceiling else 'no'}")
+    print(f"Partition: {'yes' if partition else 'no'}")
+    if partition:
+        print(
+            "Partition door: "
+            f"width={DOOR_WIDTH}, height={DOOR_HEIGHT}, "
+            f"thickness={PARTITION_THICKNESS}, position={DOOR_POSITION}"
+        )
     light_width, light_height = LIGHT_SIZE_PRESETS[light_size]
     print(
         f"Light size preset: {light_size} ({light_width}m x {light_height}m)"
@@ -412,6 +476,7 @@ def main() -> None:
             ceiling=args.ceiling,
             light_density=args.light_density,
             light_size=args.light_size,
+            partition=args.partition,
         )
     finally:
         if SIMULATION_APP:
