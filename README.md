@@ -156,6 +156,12 @@ sudo chmod -R g+rwX \
   "$HOME/docker/iros-workshop/isaac-sim-6.0.0"
 ```
 
+The compose stack persists the main Kit cache, CUDA compute cache,
+Omniverse data/config, Kit data, logs, and package data. It intentionally does
+not bind-mount `/isaac-sim/extscache`, because those extension cache folders
+also contain required bundled shader resources; an empty host directory there
+would hide them and break RTX shader loading.
+
 ## Docker Quick Start
 
 Run all commands from the repository root.
@@ -179,6 +185,15 @@ This builds the three local images in parallel, starts the containers, and check
 
 ### Start Isaac Sim 5.1.0
 
+Build the local Isaac Sim 5.1.0 runtime image:
+
+```bash
+docker compose --env-file docker/.env.base -f docker/docker-compose.yaml \
+  --profile isaac-sim-5.1.0 build isaac-sim-5-1-0
+```
+
+Start the container:
+
 ```bash
 docker compose --env-file docker/.env.base -f docker/docker-compose.yaml \
   --profile isaac-sim-5.1.0 up -d
@@ -195,6 +210,53 @@ Typical GUI launch inside the container:
 ```bash
 ./runapp.sh
 ```
+
+### Launch Mobile FR3 In The Physics Room
+
+The robot-room launch script runs in the Isaac Sim container. It loads
+`assets/robot_room_physics.usd` by default, places the mobile FR3 from a task
+preset, and opens the scene paused. Presets are `task1` at `(4.4, -2.5, 0.0)`,
+`task2` at `(4.4, 2.6, 0.0)`, and `task3` at `(-4.6, 2.7, 0.0)`. The preset
+robot yaw is `90` degrees for `task1` and `-90` degrees for `task2`/`task3`.
+
+Launch the demo from the host:
+
+```bash
+docker exec -it isaac-sim-5-1-0-workshop bash -lc \
+  'cd /workspace/IROS_Workshop && python scripts/scenes/scene_robot_room_keyboard.py --task task3'
+```
+
+To use a different room USD, pass `--room-usd`, for example:
+
+```bash
+docker exec -it isaac-sim-5-1-0-workshop bash -lc \
+  'cd /workspace/IROS_Workshop && python scripts/scenes/scene_robot_room_keyboard.py --room-usd assets/robot_room.usd'
+```
+
+You can still override the preset with `--robot-x`, `--robot-y`, and
+`--robot-z` when manually checking a placement.
+
+The first launch can spend time compiling Isaac/RTX shader caches before the
+scene becomes interactive. Click Play in the Isaac Sim GUI to start the
+timeline, or add `--autoplay` to start immediately.
+
+The script launches native Isaac Sim and forwards the task preset into Kit, so
+switching `--task task1`, `--task task2`, or `--task task3` changes the spawn
+position without editing the command coordinates.
+
+For ROS2 bridge development, enable the bridge explicitly. The launcher sets
+`ROS_DISTRO`, `RMW_IMPLEMENTATION`, and the bundled bridge library path before
+Isaac Sim starts:
+
+```bash
+docker exec -it isaac-sim-5-1-0-workshop bash -lc \
+  'cd /workspace/IROS_Workshop && python scripts/scenes/scene_robot_room_keyboard.py --task task3 --ros2-bridge fastdds'
+```
+
+Use `--ros2-bridge cyclonedds` if you want CycloneDDS instead of FastDDS. The
+default `--experience base` avoids loading optional extensions such as the ROS2
+bridge unless requested; use `--experience full` when you need the full Isaac
+Sim extension set.
 
 ### Start Isaac Sim 6.0.0-dev2
 
@@ -260,6 +322,7 @@ If GUI applications fail to open:
 ## Main Workshop Scripts
 
 ### Demo Scenes
+- `scripts/scenes/scene_robot_room_keyboard.py` — Isaac Sim launcher for the physics room scene with task-based mobile FR3 spawn presets.
 - `scripts/scenes/scene_robot_keyboard.py` — complete tabletop scene with keyboard control.
 - `scripts/scenes/scene_robot_tables.py` — complete tabletop scene with robot but without keyboard control.
 - `scripts/scenes/scene_11_tables.py` — 11-table composition utility and preview.
@@ -452,6 +515,28 @@ When Fabric is enabled, USD may not contain the latest live transforms(xform
 transforms will be stale) duringsimulation. Use PhysX, Fabric-aware, or tensor 
 APIs for runtime state queriesinstead of reading moving body poses directly 
 from USD.
+
+## Runtime Troubleshooting
+
+If Isaac Sim reports permission errors for `/isaac-sim/kit/logs` or
+`/isaac-sim/kit/data/Kit/.../user.config.json`, recreate the container after
+updating the compose mounts and ensure the host cache directories are owned by
+your container UID/GID:
+
+```bash
+python3 scripts/tools/validate_docker_runtimes.py --prepare-dirs --skip-script-check
+sudo chown -R "${HOST_UID:-$(id -u)}:${HOST_GID:-$(id -g)}" \
+  "$HOME/docker/iros-workshop/isaac-sim-5.1.0" \
+  "$HOME/docker/iros-workshop/isaac-sim-6.0.0"
+docker compose --env-file docker/.env.base -f docker/docker-compose.yaml \
+  --profile isaac-sim-5.1.0 up -d --force-recreate isaac-sim-5-1-0
+```
+
+If ROS2 bridge startup fails with missing `libament_index_cpp.so`, launch with
+`--ros2-bridge fastdds` or `--ros2-bridge cyclonedds` so the bundled ROS2
+library path is configured before Isaac Sim starts. The launcher re-execs
+itself once in ROS mode so `LD_LIBRARY_PATH` is visible to the dynamic loader
+from process startup, and stores ROS logs under `/isaac-sim/kit/logs/ros`.
 
 ## Validation Checklist
 

@@ -39,8 +39,11 @@ RUNTIMES = (
             "/isaac-sim/.cache/warp",
             "/isaac-sim/.nv/ComputeCache",
             "/isaac-sim/.nvidia-omniverse/logs",
+            "/isaac-sim/kit/logs",
             "/isaac-sim/.nvidia-omniverse/config",
+            "/isaac-sim/data/Kit",
             "/isaac-sim/kit/data/documents",
+            "/isaac-sim/kit/data/Kit",
             "/isaac-sim/.local/share/ov/data/documents",
             "/isaac-sim/.local/share/ov/data/Kit",
             "/isaac-sim/.local/share/ov/pkg",
@@ -58,8 +61,11 @@ RUNTIMES = (
             "/isaac-sim/.cache/warp",
             "/isaac-sim/.nv/ComputeCache",
             "/isaac-sim/.nvidia-omniverse/logs",
+            "/isaac-sim/kit/logs",
             "/isaac-sim/.nvidia-omniverse/config",
+            "/isaac-sim/data/Kit",
             "/isaac-sim/kit/data/documents",
+            "/isaac-sim/kit/data/Kit",
             "/isaac-sim/.local/share/ov/data/documents",
             "/isaac-sim/.local/share/ov/data/Kit",
             "/isaac-sim/.local/share/ov/pkg",
@@ -216,9 +222,9 @@ def prepare_host_dirs(env: dict[str, str]) -> None:
 
     print(f"Prepared host Docker storage under {docker_root}")
     print(
-        "Isaac Sim containers run as UID/GID 1234. "
+        "Isaac Sim containers run as HOST_UID/HOST_GID. "
         "If write checks fail, run:\n"
-        f"  sudo chown -R 1234:1234 "
+        '  sudo chown -R "${HOST_UID:-$(id -u)}:${HOST_GID:-$(id -g)}" '
         f"{docker_root / 'isaac-sim-5.1.0'} "
         f"{docker_root / 'isaac-sim-6.0.0'}"
     )
@@ -379,6 +385,7 @@ def validate_scripts(container: str) -> None:
         "'scripts/scenes/scene_11_tables.py', "
         "'scripts/scenes/scene_robot_tables.py', "
         "'scripts/scenes/scene_robot_keyboard.py', "
+        "'scripts/scenes/scene_robot_room_keyboard.py', "
         "'scripts/scenes/keyboard_control.py'"
         "]; "
         "[compile(Path(file).read_text(encoding='utf-8'), file, 'exec') "
