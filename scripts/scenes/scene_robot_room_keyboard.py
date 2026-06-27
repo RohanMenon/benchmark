@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Launch the physics robot room in Isaac Sim with the mobile FR3 placed."""
+"""Launch the robot room in Isaac Sim with the mobile FR3 placed."""
 
 from __future__ import annotations
 
@@ -7,6 +7,7 @@ import argparse
 import json
 import math
 import os
+import random
 import sys
 from pathlib import Path
 from typing import Any
@@ -26,6 +27,24 @@ ROS2_ENV_READY_VAR = "IROS_ROS2_BRIDGE_ENV_READY"
 INSIDE_KIT_ENV_VAR = "IROS_SCENE_LAUNCH_INSIDE_KIT"
 INNER_ARGV_ENV_VAR = "IROS_SCENE_LAUNCH_ARGV"
 ISAACSIM_LAUNCHER = Path("/isaac-sim/isaac-sim.sh")
+DEFAULT_BEAN_COLOR = (0.20, 0.12, 0.07)
+DEFAULT_BEAN_COUNT = 300
+DEFAULT_BEAN_DENSITY = 850.0
+BOWL_USD = asset_path("bowl2.usd")
+TASK3_BOWL_POSITION = (-4.3, -1.5, 0.74659)
+INITIAL_VIEW_POSE = (
+    (-8.12589, -3.29067, 2.79653),
+    (73.13762, 0.0, -50.88313),
+)
+BEAN_PHYSICS = {
+    "radius": 0.0025,
+    "half_height": 0.0016,
+    "spawn_height": 0.01,
+    "spawn_wall_thickness": 0.016,
+    "spawn_spacing_scale": 1.2,
+    "friction": 0.55,
+    "restitution": 0.02,
+}
 TASK_ROBOT_POSES = {
     "task1": {"position": (4.4, -2.5, 0.0), "yaw": 90.0},
     "task2": {"position": (4.4, 2.6, 0.0), "yaw": -90.0},
@@ -42,17 +61,15 @@ def parse_args() -> argparse.Namespace:
 
     parser = argparse.ArgumentParser(
         description=(
-            "Launch robot_room_physics.usd with the mobile FR3 in Isaac Sim."
+            "Launch robot_room.usd with the mobile FR3 in Isaac Sim."
         ),
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
         "--room-usd",
         type=Path,
-        default=None,
-        help=(
-            "Room USD to reference. Defaults to assets/robot_room_physics.usd."
-        ),
+        default="robot_room.usd",
+        help=("Room USD to reference under asset folder."),
     )
     parser.add_argument(
         "--robot-usd",
@@ -139,6 +156,24 @@ def resolve_usd_path(selection: Path | None, default_path: Path) -> Path:
 def yaw_to_quat(yaw_degrees: float) -> tuple[float, float, float, float]:
     half_yaw = math.radians(yaw_degrees) * 0.5
     return (math.cos(half_yaw), 0.0, 0.0, math.sin(half_yaw))
+
+
+def euler_xyz_to_quat(
+    rotation_degrees: tuple[float, float, float],
+) -> tuple[float, float, float, float]:
+    roll, pitch, yaw = (math.radians(angle) for angle in rotation_degrees)
+    cr = math.cos(roll * 0.5)
+    sr = math.sin(roll * 0.5)
+    cp = math.cos(pitch * 0.5)
+    sp = math.sin(pitch * 0.5)
+    cy = math.cos(yaw * 0.5)
+    sy = math.sin(yaw * 0.5)
+    return (
+        cr * cp * cy + sr * sp * sy,
+        sr * cp * cy - cr * sp * sy,
+        cr * sp * cy + sr * cp * sy,
+        cr * cp * sy - sr * sp * cy,
+    )
 
 
 def resolve_robot_position(
@@ -272,10 +307,254 @@ def reference_usd(
     return asset_prim
 
 
+def create_preview_material(
+    stage: Any,
+    path: str,
+    diffuse_color: tuple[float, float, float],
+    metallic: float = 0.0,
+    roughness: float = 0.5,
+) -> Any:
+    from pxr import Gf as pxr_gf
+    from pxr import Sdf as pxr_sdf
+    from pxr import UsdShade as pxr_usd_shade
+
+    Gf: Any = pxr_gf
+    Sdf: Any = pxr_sdf
+    UsdShade: Any = pxr_usd_shade
+
+    material = UsdShade.Material.Define(stage, path)
+    shader = UsdShade.Shader.Define(stage, f"{path}/PreviewSurface")
+    shader.CreateIdAttr("UsdPreviewSurface")
+    shader.CreateInput("diffuseColor", Sdf.ValueTypeNames.Color3f).Set(
+        Gf.Vec3f(*diffuse_color)
+    )
+    shader.CreateInput("metallic", Sdf.ValueTypeNames.Float).Set(metallic)
+    shader.CreateInput("roughness", Sdf.ValueTypeNames.Float).Set(roughness)
+    surface_output = shader.CreateOutput("surface", Sdf.ValueTypeNames.Token)
+    material.CreateSurfaceOutput().ConnectToSource(surface_output)
+    return material
+
+
+def apply_physics_material(
+    material: Any,
+    friction: float,
+    restitution: float,
+) -> None:
+    from pxr import UsdPhysics as pxr_usd_physics
+
+    UsdPhysics: Any = pxr_usd_physics
+
+    physics_api = UsdPhysics.MaterialAPI.Apply(material.GetPrim())
+    physics_api.CreateStaticFrictionAttr(friction)
+    physics_api.CreateDynamicFrictionAttr(friction)
+    physics_api.CreateRestitutionAttr(restitution)
+
+
+def usd_world_bounds(
+    path: Path,
+) -> tuple[tuple[float, float, float], tuple[float, float, float]]:
+    from pxr import Usd as pxr_usd
+    from pxr import UsdGeom as pxr_usd_geom
+
+    Usd: Any = pxr_usd
+    UsdGeom: Any = pxr_usd_geom
+
+    stage = Usd.Stage.Open(str(path))
+    if stage is None:
+        raise ValueError(f"Could not open USD stage: {path}")
+
+    purposes = [
+        UsdGeom.Tokens.default_,
+        UsdGeom.Tokens.render,
+        UsdGeom.Tokens.proxy,
+    ]
+    bbox_cache = UsdGeom.BBoxCache(Usd.TimeCode.Default(), purposes)
+    bound_range = bbox_cache.ComputeWorldBound(
+        stage.GetPseudoRoot()
+    ).ComputeAlignedRange()
+    bound_min = bound_range.GetMin()
+    bound_max = bound_range.GetMax()
+    return tuple(bound_min), tuple(bound_max)
+
+
+def bean_spawn_positions(
+    count: int,
+    bowl_position: tuple[float, float, float],
+) -> list[tuple[float, float, float]]:
+    bowl_min_local, bowl_max_local = usd_world_bounds(BOWL_USD)
+    container_min = tuple(
+        bowl_min_local[index] + bowl_position[index] for index in range(3)
+    )
+    container_max = tuple(
+        bowl_max_local[index] + bowl_position[index] for index in range(3)
+    )
+    container_center_xy = (
+        0.5 * (container_min[0] + container_max[0]),
+        0.5 * (container_min[1] + container_max[1]),
+    )
+    container_inner_radius = 0.5 * min(
+        container_max[0] - container_min[0],
+        container_max[1] - container_min[1],
+    )
+    bean_radius = BEAN_PHYSICS["radius"]
+    bean_half_height = BEAN_PHYSICS["half_height"]
+    bean_length = 2.0 * (bean_half_height + bean_radius)
+    radial_margin = max(1.25 * bean_radius, 0.60 * bean_half_height)
+    usable_radius = max(
+        bean_radius,
+        container_inner_radius
+        - BEAN_PHYSICS["spawn_wall_thickness"]
+        - radial_margin,
+    )
+    layer_height = max(2.4 * bean_radius, 0.9 * bean_length)
+    spawn_bottom_z = bowl_position[2] + BEAN_PHYSICS["spawn_height"]
+    ring_spacing = BEAN_PHYSICS["spawn_spacing_scale"] * max(
+        2.8 * bean_radius,
+        0.92 * bean_length,
+    )
+    angular_spacing = BEAN_PHYSICS["spawn_spacing_scale"] * max(
+        2.6 * bean_radius,
+        0.8 * bean_length,
+    )
+
+    positions = []
+    layer_index = 0
+    while len(positions) < count:
+        z = spawn_bottom_z + layer_index * layer_height
+        ring_phase = 0.5 * math.pi * (layer_index % 4)
+
+        positions.append((container_center_xy[0], container_center_xy[1], z))
+        if len(positions) >= count:
+            break
+
+        ring_radius = ring_spacing
+        while ring_radius <= usable_radius and len(positions) < count:
+            circumference = 2.0 * math.pi * ring_radius
+            count_on_ring = max(6, int(circumference / angular_spacing))
+            angle_step = 2.0 * math.pi / count_on_ring
+            for ring_index in range(count_on_ring):
+                angle = ring_phase + ring_index * angle_step
+                radial_jitter = random.uniform(
+                    -0.08 * ring_spacing,
+                    0.08 * ring_spacing,
+                )
+                theta_jitter = random.uniform(-0.08, 0.08) * angle_step
+                current_radius = min(
+                    usable_radius,
+                    max(bean_radius, ring_radius + radial_jitter),
+                )
+                x = current_radius * math.cos(angle + theta_jitter)
+                y = current_radius * math.sin(angle + theta_jitter)
+                if x * x + y * y > usable_radius * usable_radius:
+                    continue
+                positions.append(
+                    (
+                        container_center_xy[0] + x,
+                        container_center_xy[1] + y,
+                        z
+                        + random.uniform(
+                            -0.08 * bean_radius,
+                            0.08 * bean_radius,
+                        ),
+                    )
+                )
+                if len(positions) >= count:
+                    break
+            ring_radius += ring_spacing
+        layer_index += 1
+    return positions[:count]
+
+
+def add_coffee_beans(
+    stage: Any,
+    count: int,
+    color: tuple[float, float, float],
+    density: float,
+    bowl_position: tuple[float, float, float],
+) -> None:
+    if count <= 0:
+        return
+
+    from pxr import UsdGeom as pxr_usd_geom
+    from pxr import UsdPhysics as pxr_usd_physics
+    from pxr import UsdShade as pxr_usd_shade
+
+    UsdGeom: Any = pxr_usd_geom
+    UsdPhysics: Any = pxr_usd_physics
+    UsdShade: Any = pxr_usd_shade
+
+    UsdGeom.Scope.Define(stage, "/World/Scene")
+    UsdGeom.Scope.Define(stage, "/World/Scene/CoffeeBeans")
+    UsdGeom.Scope.Define(stage, "/World/Looks")
+    material = create_preview_material(
+        stage,
+        "/World/Looks/CoffeeBean",
+        diffuse_color=color,
+        metallic=0.0,
+        roughness=0.8,
+    )
+    apply_physics_material(
+        material,
+        friction=BEAN_PHYSICS["friction"],
+        restitution=BEAN_PHYSICS["restitution"],
+    )
+
+    radius = BEAN_PHYSICS["radius"]
+    half_height = BEAN_PHYSICS["half_height"]
+
+    positions = bean_spawn_positions(count, bowl_position)
+    for index, position in enumerate(positions):
+        bean_prim_path = f"/World/Scene/CoffeeBeans/Bean_{index:04d}"
+        bean = UsdGeom.Capsule.Define(stage, bean_prim_path)
+        bean.CreateRadiusAttr(radius)
+        bean.CreateHeightAttr(2.0 * half_height)
+        bean.CreateAxisAttr("X")
+        bean_prim = bean.GetPrim()
+
+        yaw = random.uniform(0.0, 2.0 * math.pi)
+        set_xform(bean_prim, position, yaw_to_quat(math.degrees(yaw)))
+
+        UsdPhysics.CollisionAPI.Apply(bean_prim)
+        UsdPhysics.RigidBodyAPI.Apply(bean_prim)
+        mass_api = UsdPhysics.MassAPI.Apply(bean_prim)
+        mass_api.CreateDensityAttr(density)
+        UsdShade.MaterialBindingAPI.Apply(bean_prim).Bind(material)
+
+
+def set_initial_perspective_view(app: Any) -> None:
+    if not INITIAL_VIEW_POSE:
+        return
+
+    position, rotation = INITIAL_VIEW_POSE
+    rotation_quat = euler_xyz_to_quat(rotation)
+    camera_path = "/OmniverseKit_Persp"
+
+    try:
+        from omni.kit.viewport.utility import get_active_viewport
+        from omni.kit.viewport.utility.camera_state import ViewportCameraState
+        from pxr import Gf as pxr_gf
+
+        Gf: Any = pxr_gf
+        viewport = get_active_viewport()
+        if viewport is not None:
+            viewport.camera_path = camera_path
+            try:
+                camera_state = ViewportCameraState(camera_path, viewport)
+            except TypeError:
+                camera_state = ViewportCameraState(camera_path)
+            camera_state.set_position_world(Gf.Vec3d(*position), True)
+            camera_state.set_rotation_world(Gf.Quatd(*rotation_quat), True)
+            app.update()
+            return
+    except Exception as exc:
+        print(f"Viewport pose API unavailable: {exc}")
+
+
 def build_stage(
     app: Any,
     room_path: Path,
     robot_path: Path,
+    task: str,
     robot_position: tuple[float, float, float],
     robot_rotation: tuple[float, float, float, float],
     robot_yaw: float,
@@ -319,19 +598,22 @@ def build_stage(
         robot_rotation,
     )
 
+    if task == "task3":
+        add_coffee_beans(
+            stage,
+            count=DEFAULT_BEAN_COUNT,
+            color=DEFAULT_BEAN_COLOR,
+            density=DEFAULT_BEAN_DENSITY,
+            bowl_position=TASK3_BOWL_POSITION,
+        )
+
     dome = UsdLux.DomeLight.Define(stage, "/World/Light")
     dome.CreateIntensityAttr(3000.0)
 
-    camera = UsdGeom.Camera.Define(stage, "/World/Camera")
-    set_xform(
-        camera.GetPrim(),
-        (robot_position[0] + 3.5, robot_position[1] + 3.5, 2.5),
-        (0.9238795, -0.3826834, 0.0, 0.0),
-    )
-    camera.CreateFocalLengthAttr(18.0)
-
     for _ in range(10):
         app.update()
+
+    set_initial_perspective_view(app)
 
     print("=" * 80)
     print("Robot room loaded in Isaac Sim")
@@ -344,6 +626,7 @@ def build_stage(
         f"{robot_position[2]:.3f})"
     )
     print(f"Robot yaw: {robot_yaw:.1f} deg")
+    print(f"Coffee beans: {DEFAULT_BEAN_COUNT if task == 'task3' else 0}")
     return stage
 
 
@@ -351,7 +634,7 @@ def main() -> None:
     args = parse_args()
     room_path = resolve_usd_path(
         args.room_usd,
-        asset_path("robot_room_physics.usd"),
+        asset_path("robot_room.usd"),
     )
     robot_path = resolve_usd_path(
         args.robot_usd,
@@ -378,6 +661,7 @@ def main() -> None:
             app,
             room_path=room_path,
             robot_path=robot_path,
+            task=args.task,
             robot_position=robot_position,
             robot_rotation=yaw_to_quat(robot_yaw),
             robot_yaw=robot_yaw,

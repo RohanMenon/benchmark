@@ -1,6 +1,6 @@
 # IROS Workshop Competition Repository
 
-This repository provides a workshop-focused Isaac Sim environment for an international competition. It contains tabletop scene composition scripts, keyboard-controlled mobile dual-arm robot demos, USD utilities, Docker runtimes for Isaac Sim and Isaac Lab, and third-party robot description assets.
+This repository provides a workshop-focused Isaac Sim environment for an international competition. The active workflow uses `assets/robot_room.usd` as the base scene and launches the mobile dual-arm robot through Isaac Sim. Older tabletop scene generators are kept only for reference.
 
 For the full developer workflow, see [`docs/developer_setup.md`](docs/developer_setup.md).
 
@@ -244,13 +244,16 @@ Typical GUI launch inside the container:
 ./runapp.sh
 ```
 
-### Launch Mobile FR3 In The Physics Room
+### Launch Mobile FR3 In The Robot Room
 
 The robot-room launch script runs in the Isaac Sim container. It loads
-`assets/robot_room_physics.usd` by default, places the mobile FR3 from a task
+`assets/robot_room.usd` by default, places the mobile FR3 from a task
 preset, and opens the scene paused. Presets are `task1` at `(4.4, -2.5, 0.0)`,
 `task2` at `(4.4, 2.6, 0.0)`, and `task3` at `(-4.6, 2.7, 0.0)`. The preset
 robot yaw is `90` degrees for `task1` and `-90` degrees for `task2`/`task3`.
+For `task3`, the launcher also adds 300 coffee bean rigid bodies to the bowl at
+`(-4.3, -1.5, 0.74659)` and sets the built-in Perspective viewport to
+`(-6.94158, 4.45737, 2.85191, 71.76099, 0.0, -136.55911)`.
 
 Launch the demo from the host:
 
@@ -355,17 +358,24 @@ If GUI applications fail to open:
 ## Main Workshop Scripts
 
 ### Demo Scenes
-- `scripts/scenes/scene_robot_room_keyboard.py` — Isaac Sim launcher for the physics room scene with task-based mobile FR3 spawn presets.
-- `scripts/scenes/scene_robot_keyboard.py` — complete tabletop scene with keyboard control.
-- `scripts/scenes/scene_robot_tables.py` — complete tabletop scene with robot but without keyboard control.
-- `scripts/scenes/scene_11_tables.py` — 11-table composition utility and preview.
-- `scripts/scenes/scene_with_table.py` — simple single-table placement example.
-- `scripts/scenes/keyboard_control.py` — reduced robot keyboard-control demo.
+- `scripts/scenes/scene_robot_room_keyboard.py` — Isaac Sim launcher for the robot room scene with task-based mobile FR3 spawn presets. `task3` includes coffee beans in the bowl.
 
 ### Utilities
-- `scripts/tools/compose_scene_usd.py` — compose the tabletop task scene directly as USD.
-- `scripts/tools/create_wall_room.py` — generate a simple wall-room USD asset.
 - `scripts/tools/inspect_usd.py` — print the prim hierarchy of a USD file.
+
+<details>
+<summary>Outdated scene generators and demos</summary>
+
+- `scripts/deprecated/scene_robot_keyboard.py` — older tabletop scene with keyboard control.
+- `scripts/deprecated/scene_robot_tables.py` — older tabletop scene with robot but without keyboard control.
+- `scripts/deprecated/scene_11_tables.py` — older 11-table composition utility and preview.
+- `scripts/deprecated/scene_with_table.py` — older single-table placement example.
+- `scripts/deprecated/keyboard_control.py` — older reduced robot keyboard-control demo.
+- `scripts/deprecated/launch_random_heads_scene.py` — older tabletop head randomization launcher.
+- `scripts/deprecated/create_wall_room.py` — older wall-room USD generator. The current base room is `assets/robot_room.usd`.
+- `scripts/deprecated/compose_scene_usd.py` — deprecated tabletop scene composer kept for reference. The active task3 bean setup now lives in `scripts/scenes/scene_robot_room_keyboard.py`.
+
+</details>
 
 ### Manual Validation Scenes
 - `scripts/manual_tests/test_table_cutlery.py` — validate table plus cutlery placement.
@@ -429,9 +439,23 @@ ros2 topic pub --once /joint_command sensor_msgs/msg/JointState "{name: ['left_f
 
 ## Running Scripts
 
-Inside an Isaac Sim runtime, construct reusable USD scenes with these tools.
+Inside an Isaac Sim runtime, use the prebuilt `assets/robot_room.usd` base scene
+through `scripts/scenes/scene_robot_room_keyboard.py`. New workshop task work
+should build on that room instead of generating new base scenes.
 
-`scripts/tools/create_wall_room.py` creates a room USD asset.
+Inspect the active robot-room USD hierarchy:
+
+```bash
+python scripts/tools/inspect_usd.py assets/robot_room.usd
+```
+
+<details>
+<summary>Outdated scene generators</summary>
+
+These scripts are kept for reference only. They do not define the current
+competition base scene.
+
+`scripts/deprecated/create_wall_room.py` creates a room USD asset.
 
 - `--output PATH`: base output path. Default: `assets/plain_white_room.usd`. The script appends room dimensions, and `_partition` when enabled.
 - `--length METERS`: inside room length along Y. Default: `30.0`.
@@ -445,7 +469,15 @@ Inside an Isaac Sim runtime, construct reusable USD scenes with these tools.
 - `--light-size NAME`: ceiling light panel shape, either `square` or `rectangle`. Default: `square`.
 - `--partition`: add a 5m partition wall with a 1m x 2m door opening.
 
-`scripts/tools/compose_scene_usd.py` composes the tabletop task scene.
+Official room generation example:
+
+```bash
+python scripts/deprecated/create_wall_room.py --length 30.0 --width 20.0 --height 3.0 --ceiling --partition
+```
+
+`scripts/deprecated/compose_scene_usd.py` composes the older tabletop task scene.
+It is kept for reference and for inspecting the previous coffee bean setup, but
+new robot-room task work should use `scripts/scenes/scene_robot_room_keyboard.py`.
 
 - `--output PATH`: USD file to write when `--save` is set. Default: `assets/tabletop_task_scene.usd`.
 - `--save`: write the composed scene to `--output`.
@@ -460,31 +492,13 @@ Inside an Isaac Sim runtime, construct reusable USD scenes with these tools.
 - `--bean-color R G B`: coffee bean RGB color as three floats in `[0, 1]`. Default: `0.20 0.12 0.07`.
 - `--bean-density VALUE`: coffee bean density for USD physics mass properties. Default: `850.0`.
 
-Official room generation example:
-
-```bash
-python scripts/tools/create_wall_room.py --length 30.0 --width 20.0 --height 3.0 --ceiling --partition
-```
-
 Official scene composition example:
 
 ```bash
-python scripts/tools/compose_scene_usd.py --env assets/plain_white_room_20_30_3_partition.usd --bean-count 300 --save
+python scripts/deprecated/compose_scene_usd.py --env assets/plain_white_room_20_30_3_partition.usd --bean-count 300 --save
 ```
 
-Inspect the composed USD hierarchy:
-
-```bash
-python scripts/tools/inspect_usd.py assets/tabletop_task_scene_with_robot.usd
-```
-
-Inside an Isaac Lab runtime, run robot manipulation and control scenes with:
-
-```bash
-python scripts/scenes/scene_robot_keyboard.py
-python scripts/scenes/scene_robot_tables.py
-python scripts/manual_tests/test_table_cutlery.py
-```
+</details>
 
 ## Submodules
 
@@ -578,7 +592,7 @@ After changes, verify the following:
 1. `docker compose` resolves all configured profiles.
 2. The repository appears inside each container at `/workspace/IROS_Workshop`.
 3. Isaac Sim GUI launches correctly through X11.
-4. `scripts/scenes/scene_robot_keyboard.py` starts and resolves all required USD assets.
+4. `scripts/scenes/scene_robot_room_keyboard.py --task task3` starts and resolves all required USD assets.
 5. `third_party/franka_description/urdfs/mobile_fr3_duo_v0_2_franka_hand.usd` is available.
 6. No tools or docs still reference the removed `source/robot_lab` tree.
 

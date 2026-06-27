@@ -329,8 +329,9 @@ def validate_mounts(container: str, runtime: Runtime) -> None:
             f"{mount_checks} && "
             f"{write_checks} && "
             f"test -f {WORKSPACE_ROOT}/README.md && "
-            f"test -f {WORKSPACE_ROOT}/scripts/tools/compose_scene_usd.py && "
-            f"test -f {WORKSPACE_ROOT}/assets/table_edit.usd"
+            f"test -f {WORKSPACE_ROOT}/scripts/scenes/"
+            "scene_robot_room_keyboard.py && "
+            f"test -f {WORKSPACE_ROOT}/assets/robot_room.usd"
         ),
     )
 
@@ -380,13 +381,8 @@ def validate_scripts(container: str) -> None:
         "files = ["
         "'scripts/common/path_utils.py', "
         "'scripts/common/tmr_base_control.py', "
-        "'scripts/tools/compose_scene_usd.py', "
         "'scripts/tools/inspect_usd.py', "
-        "'scripts/scenes/scene_11_tables.py', "
-        "'scripts/scenes/scene_robot_tables.py', "
-        "'scripts/scenes/scene_robot_keyboard.py', "
         "'scripts/scenes/scene_robot_room_keyboard.py', "
-        "'scripts/scenes/keyboard_control.py'"
         "]; "
         "[compile(Path(file).read_text(encoding='utf-8'), file, 'exec') "
         "for file in files]; "
@@ -397,7 +393,7 @@ def validate_scripts(container: str) -> None:
         "import sys; "
         "sys.path.insert(0, 'scripts/common'); "
         "from path_utils import asset_path, franka_urdf_path; "
-        "assert asset_path('table_edit.usd').is_file(); "
+        "assert asset_path('robot_room.usd').is_file(); "
         "assert franka_urdf_path("
         "'mobile_fr3_duo_v0_2_franka_hand.usd'"
         ").is_file(); "
@@ -420,9 +416,9 @@ def validate_scripts(container: str) -> None:
             f"$PY -c {shlex.quote(runtime_check)} && "
             f"$PY -c {shlex.quote(syntax_check)} && "
             f"$PY -c {shlex.quote(path_check)} && "
-            "$PY scripts/tools/compose_scene_usd.py "
-            "--output /tmp/iros_workshop_validate_scene.usd && "
-            "test -f /tmp/iros_workshop_validate_scene.usd"
+            "$PY scripts/tools/inspect_usd.py "
+            "assets/robot_room.usd >/tmp/iros_workshop_robot_room.txt && "
+            "test -s /tmp/iros_workshop_robot_room.txt"
         ),
     )
 

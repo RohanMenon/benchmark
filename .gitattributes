@@ -16,4 +16,3 @@
 # *.pt filter=lfs diff=lfs merge=lfs -text
 # *.jit filter=lfs diff=lfs merge=lfs -text
 assets/robot_room.usd filter=lfs diff=lfs merge=lfs -text
-assets/robot_room_physics.usd filter=lfs diff=lfs merge=lfs -text
