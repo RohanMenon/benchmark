@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# Copyright (c) 2024-2026 Ziqi Fan
+# SPDX-License-Identifier: Apache-2.0
+
 """Launch the robot room in Isaac Sim with the mobile FR3 placed."""
 
 from __future__ import annotations

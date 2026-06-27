@@ -558,9 +558,9 @@ Hydra render-transform synchronization. With Fabric, USD remains the authoring
 format, but runtime body transforms are propagated through Fabric's simulation
 data path to the renderer. This is much cheaper for dense dynamic scenes.
 
-When Fabric is enabled, USD may not contain the latest live transforms(xform 
-transforms will be stale) duringsimulation. Use PhysX, Fabric-aware, or tensor 
-APIs for runtime state queriesinstead of reading moving body poses directly 
+When Fabric is enabled, USD may not contain the latest live transforms(xform
+transforms will be stale) duringsimulation. Use PhysX, Fabric-aware, or tensor
+APIs for runtime state queriesinstead of reading moving body poses directly
 from USD.
 
 ## Runtime Troubleshooting
