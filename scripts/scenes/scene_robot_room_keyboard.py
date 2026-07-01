@@ -42,7 +42,7 @@ INITIAL_VIEW_POSE = (
 BEAN_PHYSICS = {
     "radius": 0.0025,
     "half_height": 0.0016,
-    "spawn_height": 0.01,
+    "spawn_height": 0.02,
     "spawn_wall_thickness": 0.016,
     "spawn_spacing_scale": 1.2,
     "friction": 0.55,
