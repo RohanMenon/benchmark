@@ -69,17 +69,22 @@ TASK_ROBOT_POSES = {
 TASK2_TABLE_POSITION = (2.05, 1.95, 0.75)
 TASK2_CAMERA_POSITION = (2.087, 1.885, 2.7)
 TASK2_OBJECT_SPAWN_CONFIG = { # relative to table origin
-    "thermalpad": {
+    "thermalpad": { # 2 deformable meshes + attachment
         "asset_path": "task2_objects/Ram_ThermalPad_Res20_Top.usda",
-        "position": (-0.3, 0.0, 0.0),
+        "position": (-0.3, 0.0, 0.1),
         "rotation": (0.70711, 0.0, 0.0, 0.70711)
     },
-    "board_target": {
+    "thermalpad_base": { # 1 rigid kinematic mesh
+        "asset_path": "task2_objects/sticker_base.usda",
+        "position": (-0.31, -0.04, 0.017),
+        "rotation": (1.0, 0.0, 0.0, 0.0)
+    },
+    "board_target": { # 1 rigid body
         "asset_path": "task2_objects/Ram_Board_Target.usda",
         "position": (0.1, 0.0, 0.0),
         "rotation": (0.70711, 0.0, 0.0, 0.70711)
     },
-    "boards": {
+    "boards": { # 3 rigid bodies
         "asset_path": "task2_objects/Ram_Board.usda",
         "spawns": [
             {
@@ -713,27 +718,25 @@ def load_deformable_assets(
     stage: Any,
 ) -> None:
     root_position = TASK2_TABLE_POSITION
-    reference_usd(
-        stage,
-        "/World/Scene/task_objects/thermalpad",
-        asset_path(TASK2_OBJECT_SPAWN_CONFIG["thermalpad"]["asset_path"]),
-        position=tuple(root_position[index] + TASK2_OBJECT_SPAWN_CONFIG["thermalpad"]["position"][index] for index in range(3)),
-        rotation=TASK2_OBJECT_SPAWN_CONFIG["thermalpad"]["rotation"]
-    )
-    reference_usd(
-        stage,
-        "/World/Scene/task_objects/board_target",
-        asset_path(TASK2_OBJECT_SPAWN_CONFIG["board_target"]["asset_path"]),
-        position=tuple(root_position[index] + TASK2_OBJECT_SPAWN_CONFIG["board_target"]["position"][index] for index in range(3)),
-        rotation=TASK2_OBJECT_SPAWN_CONFIG["board_target"]["rotation"]
-    )
-    for i, board_spawn in enumerate(TASK2_OBJECT_SPAWN_CONFIG["boards"]["spawns"]):
+    asset_root_path = "/World/Scene/task_objects"
+
+    for asset_key, asset_config in TASK2_OBJECT_SPAWN_CONFIG.items():
+        if asset_key in ("boards",):
+            for i, board_spawn in enumerate(asset_config["spawns"]):
+                reference_usd(
+                    stage,
+                    f"{asset_root_path}/board_{i}",
+                    asset_path(asset_config["asset_path"]),
+                    position=tuple(root_position[index] + board_spawn["position"][index] for index in range(3)),
+                    rotation=board_spawn["rotation"]
+                )
+            continue
         reference_usd(
             stage,
-            f"/World/Scene/task_objects/board_{i}",
-            asset_path(TASK2_OBJECT_SPAWN_CONFIG["boards"]["asset_path"]),
-            position=tuple(root_position[index] + board_spawn["position"][index] for index in range(3)),
-            rotation=board_spawn["rotation"]
+            f"{asset_root_path}/{asset_key}",
+            asset_path(asset_config["asset_path"]),
+            position=tuple(root_position[index] + asset_config["position"][index] for index in range(3)),
+            rotation=asset_config["rotation"]
         )
 
 def setup_deformable_camera(
