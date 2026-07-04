@@ -48,6 +48,12 @@ pyrightconfig.json
 venv/
 **/.env
 
+# Task 1 large assets — not tracked in git; download separately (OneDrive).
+# See task1_isaacsim/README.md and task1_isaacsim/scripts/download_large_assets.sh
+task1_isaacsim/assets/Robotiq_2f_85_with_d405_mobile_fr3_duo_v0_2.usd
+task1_isaacsim/cable_world/assets/table_board_fixture/Assets/board_segment.usd
+task1_isaacsim/cable_world/assets/table_board_fixture/Assets/board_segment_upper_right.usd
+
 # agent
 .claude/
 .codex
