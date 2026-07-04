@@ -24,11 +24,11 @@ Refactor the repo into a workshop-focused layout: replace the current Isaac-Lab-
 
 2. **Phase 2 — Define target layout**
    - Recommended target:
-     - `/home/leochien/workspace/IROS_Workshop/assets`
-     - `/home/leochien/workspace/IROS_Workshop/docker`
-     - `/home/leochien/workspace/IROS_Workshop/docs`
-     - `/home/leochien/workspace/IROS_Workshop/scripts/...`
-     - `/home/leochien/workspace/IROS_Workshop/third_party/franka_description`
+     - `/home/leochien/workspace/EBiM_Challenge/assets`
+     - `/home/leochien/workspace/EBiM_Challenge/docker`
+     - `/home/leochien/workspace/EBiM_Challenge/docs`
+     - `/home/leochien/workspace/EBiM_Challenge/scripts/...`
+     - `/home/leochien/workspace/EBiM_Challenge/third_party/franka_description`
    - Split moved scripts into:
      - `scripts/scenes`
      - `scripts/tools`
@@ -38,9 +38,9 @@ Refactor the repo into a workshop-focused layout: replace the current Isaac-Lab-
 
 3. **Phase 3 — Redesign Docker**
    - Replace current Docker design in:
-     - `/home/leochien/workspace/IROS_Workshop/docker/Dockerfile`
-     - `/home/leochien/workspace/IROS_Workshop/docker/docker-compose.yaml`
-     - `/home/leochien/workspace/IROS_Workshop/docker/.env.base`
+     - `/home/leochien/workspace/EBiM_Challenge/docker/Dockerfile`
+     - `/home/leochien/workspace/EBiM_Challenge/docker/docker-compose.yaml`
+     - `/home/leochien/workspace/EBiM_Challenge/docker/.env.base`
    - Remove dependency on `source/robot_lab` from the image build.
    - Support:
      - Isaac Sim `nvcr.io/nvidia/isaac-sim:5.1.0` (https://docs.isaacsim.omniverse.nvidia.com/5.1.0/installation/install_container.html)
@@ -52,26 +52,26 @@ Refactor the repo into a workshop-focused layout: replace the current Isaac-Lab-
      - host networking where needed
      - persistent cache/config/data/log mounts
      - X11 forwarding for GUI
-     - tag the container with workshop-specific `name:tags` e.g. `isaac-sim-5.1.0:iros2026-ebim`
+     - tag the container with workshop-specific `name:tags` e.g. `isaac-sim-5.1.0:ebim2026`
    - Keep tags parameterized in env files.
 
 4. **Phase 4 — Prepare `franka_description` for submodule**
    - Move it behind a stable vendor boundary:
-     - `/home/leochien/workspace/IROS_Workshop/third_party/franka_description`
+     - `/home/leochien/workspace/EBiM_Challenge/third_party/franka_description`
    - Update all hardcoded references to use shared path resolution.
    - Known affected scripts:
-     - `/home/leochien/workspace/IROS_Workshop/scene_robot_tables.py`
-     - `/home/leochien/workspace/IROS_Workshop/compose_scene_usd.py`
-     - `/home/leochien/workspace/IROS_Workshop/keyboard_control.py`
-     - `/home/leochien/workspace/IROS_Workshop/scene_robot_keyboard.py`
+     - `/home/leochien/workspace/EBiM_Challenge/scene_robot_tables.py`
+     - `/home/leochien/workspace/EBiM_Challenge/compose_scene_usd.py`
+     - `/home/leochien/workspace/EBiM_Challenge/keyboard_control.py`
+     - `/home/leochien/workspace/EBiM_Challenge/scene_robot_keyboard.py`
    - Add clone/init instructions for submodules in docs.
    - Leave the actual remote URL undecided for now.
 
 5. **Phase 5 — Remove legacy package/template content**
    - Delete:
-     - `/home/leochien/workspace/IROS_Workshop/source/robot_lab`
+     - `/home/leochien/workspace/EBiM_Challenge/source/robot_lab`
      - old non-workshop `scripts/` content
-   - Update `/home/leochien/workspace/IROS_Workshop/pyproject.toml` so tooling no longer expects `source` or old script trees.
+   - Update `/home/leochien/workspace/EBiM_Challenge/pyproject.toml` so tooling no longer expects `source` or old script trees.
    - Clean references in `.dockerignore`, docs, and dev configs.
 
 6. **Phase 6 — Move root scripts into `scripts/`**
@@ -81,7 +81,7 @@ Refactor the repo into a workshop-focused layout: replace the current Isaac-Lab-
    - Preserve script names where possible to reduce doc churn.
 
 7. **Phase 7 — Rewrite documentation in English**
-   - Rewrite `/home/leochien/workspace/IROS_Workshop/README.md` in English.
+   - Rewrite `/home/leochien/workspace/EBiM_Challenge/README.md` in English.
    - Cover:
      - project overview
      - repo layout
@@ -101,17 +101,17 @@ Refactor the repo into a workshop-focused layout: replace the current Isaac-Lab-
    - Search for stale references to removed paths.
 
 **Relevant files**
-- `/home/leochien/workspace/IROS_Workshop/docker/docker-compose.yaml` — redesign services/profiles around Isaac Sim versions, GPU, host networking, X11, workspace mount.
-- `/home/leochien/workspace/IROS_Workshop/docker/Dockerfile` — remove `source/robot_lab` installation logic.
-- `/home/leochien/workspace/IROS_Workshop/docker/.env.base` — parameterize image tags and runtime paths.
-- `/home/leochien/workspace/IROS_Workshop/README.md` — full English rewrite.
-- `/home/leochien/workspace/IROS_Workshop/pyproject.toml` — remove tooling references to deleted trees.
-- `/home/leochien/workspace/IROS_Workshop/scene_robot_keyboard.py` — main migration reference.
-- `/home/leochien/workspace/IROS_Workshop/scene_robot_tables.py` — update path handling.
-- `/home/leochien/workspace/IROS_Workshop/keyboard_control.py` — update imports and asset paths.
-- `/home/leochien/workspace/IROS_Workshop/compose_scene_usd.py` — update robot USD path.
-- `/home/leochien/workspace/IROS_Workshop/tmr_base_control.py` — preserve importability after move.
-- `/home/leochien/workspace/IROS_Workshop/franka_description` — current vendor directory to isolate before submodule conversion.
+- `/home/leochien/workspace/EBiM_Challenge/docker/docker-compose.yaml` — redesign services/profiles around Isaac Sim versions, GPU, host networking, X11, workspace mount.
+- `/home/leochien/workspace/EBiM_Challenge/docker/Dockerfile` — remove `source/robot_lab` installation logic.
+- `/home/leochien/workspace/EBiM_Challenge/docker/.env.base` — parameterize image tags and runtime paths.
+- `/home/leochien/workspace/EBiM_Challenge/README.md` — full English rewrite.
+- `/home/leochien/workspace/EBiM_Challenge/pyproject.toml` — remove tooling references to deleted trees.
+- `/home/leochien/workspace/EBiM_Challenge/scene_robot_keyboard.py` — main migration reference.
+- `/home/leochien/workspace/EBiM_Challenge/scene_robot_tables.py` — update path handling.
+- `/home/leochien/workspace/EBiM_Challenge/keyboard_control.py` — update imports and asset paths.
+- `/home/leochien/workspace/EBiM_Challenge/compose_scene_usd.py` — update robot USD path.
+- `/home/leochien/workspace/EBiM_Challenge/tmr_base_control.py` — preserve importability after move.
+- `/home/leochien/workspace/EBiM_Challenge/franka_description` — current vendor directory to isolate before submodule conversion.
 
 **Verification**
 1. Resolve and inspect compose config for both Isaac Sim targets.
