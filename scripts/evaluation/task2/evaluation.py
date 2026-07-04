@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# Copyright (c) 2024-2026 Ziqi Fan
+# SPDX-License-Identifier: Apache-2.0
+
 """Pure IoU + orientation evaluation logic for task2.
 
 Nothing here touches ROS message parsing: the node parses the semantic mask and
@@ -53,7 +56,9 @@ def detection_best_score(detection) -> float:
     return 0.0 if best == float("-inf") else best
 
 
-def detection_matches_label(detection, target_label: str, target_id: Optional[int]) -> bool:
+def detection_matches_label(
+    detection, target_label: str, target_id: Optional[int]
+) -> bool:
     # Isaac Sim's BBox2D bridge encodes class_id as either the label name or its integer
     # ID as a string, depending on the bridge version; check all three forms.
     for class_id, _ in iter_detection_classifications(detection):
@@ -73,7 +78,9 @@ def detection_matches_label(detection, target_label: str, target_id: Optional[in
     return False
 
 
-def select_best_bbox_for_label(bbox_msg, target_label: str, target_id: int) -> Optional[BBox]:
+def select_best_bbox_for_label(
+    bbox_msg, target_label: str, target_id: int
+) -> Optional[BBox]:
     best_bbox: Optional[BBox] = None
     best_score = float("-inf")
     for det in getattr(bbox_msg, "detections", []) or []:
@@ -93,7 +100,9 @@ def parse_semantic_label_map(payload: str) -> Dict[str, int]:
     try:
         obj = json.loads(payload)
     except json.JSONDecodeError as exc:
-        raise ValueError(f"Failed to parse semantic labels payload: {exc}") from exc
+        raise ValueError(
+            f"Failed to parse semantic labels payload: {exc}"
+        ) from exc
 
     if not isinstance(obj, dict):
         raise ValueError("Semantic labels payload is not a JSON object")
@@ -119,7 +128,9 @@ def parse_semantic_label_map(payload: str) -> Dict[str, int]:
             label_to_id[label_name] = label_id
 
     if not label_to_id:
-        raise ValueError("Semantic labels payload did not contain any class label entries")
+        raise ValueError(
+            "Semantic labels payload did not contain any class label entries"
+        )
 
     return label_to_id
 
@@ -154,7 +165,9 @@ def evaluate_thermalpad_target_iou(
     the case where both liner and thermalpad bboxes are present.
     """
     if bbox_msg is None:
-        raise ValueError("BBox message is required for bbox-based IoU evaluation")
+        raise ValueError(
+            "BBox message is required for bbox-based IoU evaluation"
+        )
 
     label_to_id = parse_semantic_label_map(semantic_labels_payload)
     thermalpad_id = label_to_id.get(thermalpad_label)
@@ -165,15 +178,23 @@ def evaluate_thermalpad_target_iou(
         "thermalpad_label": thermalpad_label,
         "liner_label": liner_label,
         "target_label": target_label,
-        "thermalpad_label_id": int(thermalpad_id) if thermalpad_id is not None else None,
+        "thermalpad_label_id": int(thermalpad_id)
+        if thermalpad_id is not None
+        else None,
         "liner_label_id": int(liner_id) if liner_id is not None else None,
         "target_label_id": int(target_id) if target_id is not None else None,
         "current_frame_stamp": current_frame_stamp,
         "bbox_frame_stamp": bbox_frame_stamp,
     }
 
-    def _zero_result(orientation_case: str, target_bbox_val=None) -> Dict[str, Any]:
-        target_area_val = float(bbox_area(target_bbox_val)) if target_bbox_val is not None else 0.0
+    def _zero_result(
+        orientation_case: str, target_bbox_val=None
+    ) -> Dict[str, Any]:
+        target_area_val = (
+            float(bbox_area(target_bbox_val))
+            if target_bbox_val is not None
+            else 0.0
+        )
         return {
             "metric": "iou_pad_vs_target_current",
             "iou_thermalpad_vs_target_current": 0.0,
@@ -187,19 +208,25 @@ def evaluate_thermalpad_target_iou(
             "coverage_on_target": 0.0,
             "precision_on_pad": 0.0,
             "pad_bbox": None,
-            "target_bbox": bbox_to_dict(target_bbox_val) if target_bbox_val is not None else None,
+            "target_bbox": bbox_to_dict(target_bbox_val)
+            if target_bbox_val is not None
+            else None,
             **base,
         }
 
     # Target must be present.
     if target_id is None:
         return _zero_result("no_target_label")
-    target_bbox = select_best_bbox_for_label(bbox_msg, target_label, int(target_id))
+    target_bbox = select_best_bbox_for_label(
+        bbox_msg, target_label, int(target_id)
+    )
     if target_bbox is None:
         return _zero_result("no_target_bbox")
 
     thermalpad_bbox = (
-        select_best_bbox_for_label(bbox_msg, thermalpad_label, int(thermalpad_id))
+        select_best_bbox_for_label(
+            bbox_msg, thermalpad_label, int(thermalpad_id)
+        )
         if thermalpad_id is not None
         else None
     )
@@ -231,8 +258,12 @@ def evaluate_thermalpad_target_iou(
         is_orientation_correct = False
         orientation_case = "sideways"
         if label_array is not None:
-            thermalpad_px = count_pixels_for_hint_label(label_array, thermalpad_label, semantic_hints)
-            liner_px = count_pixels_for_hint_label(label_array, liner_label, semantic_hints)
+            thermalpad_px = count_pixels_for_hint_label(
+                label_array, thermalpad_label, semantic_hints
+            )
+            liner_px = count_pixels_for_hint_label(
+                label_array, liner_label, semantic_hints
+            )
             total_px = thermalpad_px + liner_px
             if total_px > 0:
                 liner_ratio = liner_px / total_px
@@ -257,8 +288,12 @@ def evaluate_thermalpad_target_iou(
     target_area = bbox_area(target_bbox)
     union = float(pad_area + target_area - intersection)
     iou = float(intersection / union) if union > 0.0 else 0.0
-    coverage_on_target = float(intersection / target_area) if target_area > 0.0 else 0.0
-    precision_on_pad = float(intersection / pad_area) if pad_area > 0.0 else 0.0
+    coverage_on_target = (
+        float(intersection / target_area) if target_area > 0.0 else 0.0
+    )
+    precision_on_pad = (
+        float(intersection / pad_area) if pad_area > 0.0 else 0.0
+    )
 
     return {
         "metric": "iou_pad_vs_target_current",

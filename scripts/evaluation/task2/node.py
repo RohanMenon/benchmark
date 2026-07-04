@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# Copyright (c) 2024-2026 Ziqi Fan
+# SPDX-License-Identifier: Apache-2.0
+
 """ROS2 node for the task2 eval camera service.
 
 Subscribes to the Isaac Sim eval-camera topics, and on each ``Trigger`` call
@@ -69,10 +72,14 @@ class EvalCameraCaptureService(Node):
         self._evaluate_output_dir = self._base_output_dir / "evaluate"
         self._evaluate_output_dir.mkdir(parents=True, exist_ok=True)
         self._jpeg_quality = int(config["jpeg_quality"])
-        self._thermalpad_label = str(config["thermalpad_label"]).strip().lower()
+        self._thermalpad_label = (
+            str(config["thermalpad_label"]).strip().lower()
+        )
         self._liner_label = str(config["liner_label"]).strip().lower()
         self._target_label = str(config["target_label"]).strip().lower()
-        self._bbox_json_top_per_class_only = coerce_bool(config["bbox_json_top_per_class_only"])
+        self._bbox_json_top_per_class_only = coerce_bool(
+            config["bbox_json_top_per_class_only"]
+        )
 
         # Subscription callbacks and the service handler can run on separate threads
         # with a MultiThreadedExecutor; all _latest_* writes go through this lock.
@@ -96,7 +103,10 @@ class EvalCameraCaptureService(Node):
             qos_profile_sensor_data,
         )
         self.create_subscription(
-            Image, str(config["depth_topic"]), self._on_depth, qos_profile_sensor_data
+            Image,
+            str(config["depth_topic"]),
+            self._on_depth,
+            qos_profile_sensor_data,
         )
         self.create_subscription(
             Image,
@@ -124,12 +134,18 @@ class EvalCameraCaptureService(Node):
             )
 
         self.create_service(
-            Trigger, str(config["evaluate_service_name"]), self._on_save_request
+            Trigger,
+            str(config["evaluate_service_name"]),
+            self._on_save_request,
         )
 
         self.get_logger().info(f"Subscribed image topic: {self._image_topic}")
-        self.get_logger().info(f"Evaluate service ready: {config['evaluate_service_name']}")
-        self.get_logger().info(f"Output directory: {self._evaluate_output_dir.resolve()}")
+        self.get_logger().info(
+            f"Evaluate service ready: {config['evaluate_service_name']}"
+        )
+        self.get_logger().info(
+            f"Output directory: {self._evaluate_output_dir.resolve()}"
+        )
         self.get_logger().info(
             f"IoU labels: thermalpad='{self._thermalpad_label}', "
             f"liner='{self._liner_label}', target='{self._target_label}'"
@@ -191,11 +207,15 @@ class EvalCameraCaptureService(Node):
         try:
             rgb_bgr = self._save_rgb(out, ts, snap.image, saved)
             self._save_depth(out, ts, snap.depth, saved, missing)
-            label_array = self._save_semantic(out, ts, snap.semantic, saved, missing)
+            label_array = self._save_semantic(
+                out, ts, snap.semantic, saved, missing
+            )
             self._save_labels(out, ts, snap.labels, saved, missing)
             # Modality snapshots above are written regardless; only evaluation requires both.
             if snap.labels is None or snap.bbox is None:
-                raise ValueError("Evaluation requires semantic_labels and bbox_2d_tight")
+                raise ValueError(
+                    "Evaluation requires semantic_labels and bbox_2d_tight"
+                )
             eval_result = self._save_eval(out, ts, snap, label_array, saved)
             self._save_bbox_artifacts(out, ts, snap.bbox, rgb_bgr, saved)
         except ValueError as exc:
@@ -231,7 +251,9 @@ class EvalCameraCaptureService(Node):
         saved.append(rgb_path)
         return rgb_bgr
 
-    def _save_depth(self, out, ts, depth_msg, saved: List[Path], missing: List[str]) -> None:
+    def _save_depth(
+        self, out, ts, depth_msg, saved: List[Path], missing: List[str]
+    ) -> None:
         if depth_msg is None:
             missing.append("depth")
             return
@@ -240,7 +262,9 @@ class EvalCameraCaptureService(Node):
         np.save(str(depth_npy), depth_array)
         saved.append(depth_npy)
         depth_png = _artifact_path(out, "depth", ts, "png")
-        if image_utils.write_png(depth_png, image_utils.depth_to_visual(depth_array)):
+        if image_utils.write_png(
+            depth_png, image_utils.depth_to_visual(depth_array)
+        ):
             saved.append(depth_png)
 
     def _save_semantic(
@@ -252,8 +276,12 @@ class EvalCameraCaptureService(Node):
         # Parse the int32 mask once; derive both the colorized .png and raw .npy from it.
         label_array = image_utils.ros_image_to_label_array(seg_msg)
         seg_png = _artifact_path(out, "semantic_segmentation", ts, "png")
-        if not image_utils.write_png(seg_png, image_utils.label_map_to_color(label_array)):
-            raise ValueError(f"Failed to write semantic segmentation PNG: {seg_png}")
+        if not image_utils.write_png(
+            seg_png, image_utils.label_map_to_color(label_array)
+        ):
+            raise ValueError(
+                f"Failed to write semantic segmentation PNG: {seg_png}"
+            )
         saved.append(seg_png)
         seg_npy = _artifact_path(out, "semantic_segmentation", ts, "npy")
         np.save(str(seg_npy), label_array)
@@ -261,7 +289,9 @@ class EvalCameraCaptureService(Node):
         return label_array
 
     @staticmethod
-    def _save_labels(out, ts, labels_msg, saved: List[Path], missing: List[str]) -> None:
+    def _save_labels(
+        out, ts, labels_msg, saved: List[Path], missing: List[str]
+    ) -> None:
         if labels_msg is None:
             missing.append("semantic_labels")
             return
@@ -281,28 +311,40 @@ class EvalCameraCaptureService(Node):
                 target_label=self._target_label,
                 semantic_hints=SEMANTIC_RAW_ID_NAME_HINTS,
                 label_array=label_array,
-                current_frame_stamp=_stamp_to_string(snap.semantic) if snap.semantic is not None else "",
+                current_frame_stamp=_stamp_to_string(snap.semantic)
+                if snap.semantic is not None
+                else "",
                 bbox_frame_stamp=_stamp_to_string(snap.bbox),
             )
         except ValueError as exc:
             raise ValueError(f"Evaluation failed: {exc}") from exc
         eval_path = _artifact_path(out, "iou", ts, "json")
-        eval_path.write_text(json.dumps(eval_result, indent=2), encoding="utf-8")
+        eval_path.write_text(
+            json.dumps(eval_result, indent=2), encoding="utf-8"
+        )
         saved.append(eval_path)
         return eval_result
 
-    def _save_bbox_artifacts(self, out, ts, bbox_msg, rgb_bgr, saved: List[Path]) -> None:
+    def _save_bbox_artifacts(
+        self, out, ts, bbox_msg, rgb_bgr, saved: List[Path]
+    ) -> None:
         bbox_json = _artifact_path(out, "bbox2d_tight", ts, "json")
         bbox_payload = image_utils.bbox_2d_array_to_dict(
             bbox_msg, only_top_per_class=self._bbox_json_top_per_class_only
         )
-        bbox_json.write_text(json.dumps(bbox_payload, indent=2), encoding="utf-8")
+        bbox_json.write_text(
+            json.dumps(bbox_payload, indent=2), encoding="utf-8"
+        )
         saved.append(bbox_json)
 
         overlay = image_utils.draw_bbox_overlay(rgb_bgr.copy(), bbox_msg)
         overlay_path = _artifact_path(out, "rgb_bbox2d_tight", ts, "jpg")
-        if not image_utils.write_image(overlay_path, overlay, self._jpeg_quality):
-            raise ValueError(f"Failed to write bbox overlay JPEG: {overlay_path}")
+        if not image_utils.write_image(
+            overlay_path, overlay, self._jpeg_quality
+        ):
+            raise ValueError(
+                f"Failed to write bbox overlay JPEG: {overlay_path}"
+            )
         saved.append(overlay_path)
 
 

@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# Copyright (c) 2024-2026 Ziqi Fan
+# SPDX-License-Identifier: Apache-2.0
+
 """Entrypoint for the task2 eval camera service.
 
 Loads runtime config (APP_DEFAULTS < config.yaml < CLI), then starts the ROS2

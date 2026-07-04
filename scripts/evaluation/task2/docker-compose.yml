@@ -1,3 +1,6 @@
+# Copyright (c) 2024-2026 Ziqi Fan
+# SPDX-License-Identifier: Apache-2.0
+
 # Self-contained ROS2 evaluation container for task2.
 #
 # The main docker/ stack (Isaac Sim/Lab) has no ROS2, so this service runs in its

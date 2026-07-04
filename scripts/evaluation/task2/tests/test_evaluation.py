@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# Copyright (c) 2024-2026 Ziqi Fan
+# SPDX-License-Identifier: Apache-2.0
+
 """Unit tests for the pure task2 evaluation logic (no ROS required).
 
 Run: python3 scripts/evaluation/task2/tests/test_evaluation.py
@@ -29,7 +32,11 @@ LABELS_PAYLOAD = json.dumps(
     }
 )
 LABELS_NO_TARGET = json.dumps(
-    {"0": {"class": "liner"}, "1": {"class": "thermalpad"}, "2": {"class": "board"}}
+    {
+        "0": {"class": "liner"},
+        "1": {"class": "thermalpad"},
+        "2": {"class": "board"},
+    }
 )
 
 CLASS_ID = {"liner": "0", "thermalpad": "1", "board": "2", "target": "3"}
@@ -38,19 +45,28 @@ CLASS_ID = {"liner": "0", "thermalpad": "1", "board": "2", "target": "3"}
 def make_detection(label: str, x1, y1, x2, y2, score=1.0):
     cx = (x1 + x2) / 2.0
     cy = (y1 + y2) / 2.0
-    bbox = NS(center=NS(position=NS(x=cx, y=cy)), size_x=x2 - x1, size_y=y2 - y1)
+    bbox = NS(
+        center=NS(position=NS(x=cx, y=cy)), size_x=x2 - x1, size_y=y2 - y1
+    )
     hypothesis = NS(class_id=CLASS_ID[label], score=score)
     return NS(bbox=bbox, results=[NS(hypothesis=hypothesis)])
 
 
 def make_bbox_msg(detections):
-    return NS(detections=detections, header=NS(frame_id="eval_camera", stamp=NS(sec=1, nanosec=0)))
+    return NS(
+        detections=detections,
+        header=NS(frame_id="eval_camera", stamp=NS(sec=1, nanosec=0)),
+    )
 
 
 def mask(liner_px: int, thermalpad_px: int) -> np.ndarray:
     """Build a flat int32 mask with given pixel counts (using raw-ID scheme)."""
-    liner_id = next(k for k, v in SEMANTIC_RAW_ID_NAME_HINTS.items() if v == "liner")
-    therm_id = next(k for k, v in SEMANTIC_RAW_ID_NAME_HINTS.items() if v == "thermalpad")
+    liner_id = next(
+        k for k, v in SEMANTIC_RAW_ID_NAME_HINTS.items() if v == "liner"
+    )
+    therm_id = next(
+        k for k, v in SEMANTIC_RAW_ID_NAME_HINTS.items() if v == "thermalpad"
+    )
     arr = np.zeros(liner_px + thermalpad_px + 1, dtype=np.int32)
     arr[:liner_px] = liner_id
     arr[liner_px : liner_px + thermalpad_px] = therm_id
@@ -90,18 +106,27 @@ def test_liner_only():
     expect("liner_only correct", r["is_orientation_correct"] is True)
     expect("liner_only pad", r["pad_source_label"] == "liner")
     # IoU = 5000 / (10000 + 10000 - 5000) = 1/3.
-    expect("liner_only iou", abs(r["iou_thermalpad_vs_target_current"] - (5000 / 15000)) < 1e-6)
+    expect(
+        "liner_only iou",
+        abs(r["iou_thermalpad_vs_target_current"] - (5000 / 15000)) < 1e-6,
+    )
     expect("liner_only coverage", abs(r["coverage_on_target"] - 0.5) < 1e-6)
 
 
 def test_thermalpad_only():
     msg = make_bbox_msg(
-        [make_detection("thermalpad", 100, 100, 200, 200), make_detection(*TARGET)]
+        [
+            make_detection("thermalpad", 100, 100, 200, 200),
+            make_detection(*TARGET),
+        ]
     )
     r = run_eval(msg)
     expect("thermalpad_only case", r["orientation_case"] == "thermalpad_only")
     expect("thermalpad_only wrong", r["is_orientation_correct"] is False)
-    expect("thermalpad_only iou==1", abs(r["iou_thermalpad_vs_target_current"] - 1.0) < 1e-6)
+    expect(
+        "thermalpad_only iou==1",
+        abs(r["iou_thermalpad_vs_target_current"] - 1.0) < 1e-6,
+    )
 
 
 def test_both_liner_dominant():
@@ -127,9 +152,15 @@ def test_both_thermalpad_dominant():
         ]
     )
     r = run_eval(msg, label_array=mask(liner_px=5, thermalpad_px=95))
-    expect("both_thermalpad case", r["orientation_case"] == "both_thermalpad_dominant")
+    expect(
+        "both_thermalpad case",
+        r["orientation_case"] == "both_thermalpad_dominant",
+    )
     expect("both_thermalpad wrong", r["is_orientation_correct"] is False)
-    expect("both_thermalpad iou==1", abs(r["iou_thermalpad_vs_target_current"] - 1.0) < 1e-6)
+    expect(
+        "both_thermalpad iou==1",
+        abs(r["iou_thermalpad_vs_target_current"] - 1.0) < 1e-6,
+    )
 
 
 def test_sideways():
@@ -159,7 +190,9 @@ def test_no_target_label():
     msg = make_bbox_msg([make_detection("liner", 150, 100, 250, 200)])
     r = run_eval(msg, payload=LABELS_NO_TARGET)
     expect("no_target_label case", r["orientation_case"] == "no_target_label")
-    expect("no_target_label iou==0", r["iou_thermalpad_vs_target_current"] == 0.0)
+    expect(
+        "no_target_label iou==0", r["iou_thermalpad_vs_target_current"] == 0.0
+    )
 
 
 def test_no_target_bbox():
@@ -167,7 +200,9 @@ def test_no_target_bbox():
     msg = make_bbox_msg([make_detection("liner", 150, 100, 250, 200)])
     r = run_eval(msg)
     expect("no_target_bbox case", r["orientation_case"] == "no_target_bbox")
-    expect("no_target_bbox iou==0", r["iou_thermalpad_vs_target_current"] == 0.0)
+    expect(
+        "no_target_bbox iou==0", r["iou_thermalpad_vs_target_current"] == 0.0
+    )
 
 
 def main():

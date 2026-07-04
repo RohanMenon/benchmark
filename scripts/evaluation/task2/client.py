@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
+# Copyright (c) 2024-2026 Ziqi Fan
+# SPDX-License-Identifier: Apache-2.0
+
 """Thin client that triggers the eval service and prints the result.
 
 Convenience alternative to ``ros2 service call`` -- run it from inside the
 eval_task2 container (so the ROS env is sourced), e.g.::
 
-    python3 /workspace/scripts/evaluation/task2/client.py
+    python3 / workspace / scripts / evaluation / task2 / client.py
 """
 
 import argparse
@@ -28,7 +31,9 @@ def call_evaluate(service_name: str, timeout_sec: float = 10.0) -> int:
         rclpy.spin_until_future_complete(node, future, timeout_sec=timeout_sec)
         result = future.result()
         if result is None:
-            node.get_logger().error("Service call timed out / returned no result")
+            node.get_logger().error(
+                "Service call timed out / returned no result"
+            )
             return 1
 
         node.get_logger().info(f"success={result.success}")
@@ -40,7 +45,9 @@ def call_evaluate(service_name: str, timeout_sec: float = 10.0) -> int:
 
 
 def main(argv=None) -> int:
-    parser = argparse.ArgumentParser(description="Trigger the task2 eval service")
+    parser = argparse.ArgumentParser(
+        description="Trigger the task2 eval service"
+    )
     parser.add_argument(
         "--service-name",
         type=str,

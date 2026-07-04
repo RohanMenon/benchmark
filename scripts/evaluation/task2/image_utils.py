@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# Copyright (c) 2024-2026 Ziqi Fan
+# SPDX-License-Identifier: Apache-2.0
+
 """Pure image / bounding-box helpers for the task2 eval service.
 
 These functions operate on duck-typed ROS messages (accessed via ``getattr``)
@@ -68,7 +71,9 @@ def ros_image_to_label_array(msg) -> np.ndarray:
     if msg.height == 0 or msg.width == 0:
         raise ValueError("Received empty semantic label image dimensions")
     if msg.encoding != "32SC1":
-        raise ValueError(f"Unsupported semantic label encoding: {msg.encoding}")
+        raise ValueError(
+            f"Unsupported semantic label encoding: {msg.encoding}"
+        )
 
     expected_size = msg.height * msg.width
     labels = np.frombuffer(msg.data, dtype=np.int32)
@@ -214,7 +219,9 @@ def draw_bbox_overlay(image: np.ndarray, bbox_msg) -> np.ndarray:
     return image
 
 
-def bbox_2d_array_to_dict(bbox_msg, only_top_per_class: bool = False) -> Dict[str, object]:
+def bbox_2d_array_to_dict(
+    bbox_msg, only_top_per_class: bool = False
+) -> Dict[str, object]:
     detections_with_meta = []
     for det in getattr(bbox_msg, "detections", []):
         bbox_coords = bbox_from_detection(det)
@@ -276,11 +283,17 @@ def bbox_2d_array_to_dict(bbox_msg, only_top_per_class: bool = False) -> Dict[st
     stamp = getattr(header, "stamp", None) if header is not None else None
 
     return {
-        "export_mode": "top_per_class_only" if only_top_per_class else "all_detections",
-        "frame_id": str(getattr(header, "frame_id", "")) if header is not None else "",
+        "export_mode": "top_per_class_only"
+        if only_top_per_class
+        else "all_detections",
+        "frame_id": str(getattr(header, "frame_id", ""))
+        if header is not None
+        else "",
         "stamp": {
             "sec": int(getattr(stamp, "sec", 0)) if stamp is not None else 0,
-            "nanosec": int(getattr(stamp, "nanosec", 0)) if stamp is not None else 0,
+            "nanosec": int(getattr(stamp, "nanosec", 0))
+            if stamp is not None
+            else 0,
         },
         "source_detection_count": len(detections_with_meta),
         "detection_count": len(detections),

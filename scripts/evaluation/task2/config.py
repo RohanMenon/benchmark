@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# Copyright (c) 2024-2026 Ziqi Fan
+# SPDX-License-Identifier: Apache-2.0
+
 """Runtime configuration for the task2 eval camera service.
 
 Defaults live in ``APP_DEFAULTS`` and ``config.yaml``; both can be overridden on
@@ -71,7 +74,9 @@ def _load_yaml_config(config_path: Path) -> Dict[str, Any]:
     if "eval_task2" in loaded:
         nested = loaded["eval_task2"]
         if not isinstance(nested, dict):
-            raise ValueError("'eval_task2' section must be a mapping in config YAML")
+            raise ValueError(
+                "'eval_task2' section must be a mapping in config YAML"
+            )
         return dict(nested)
     return dict(loaded)
 
@@ -86,30 +91,54 @@ def _build_arg_parser(defaults: Dict[str, Any]) -> argparse.ArgumentParser:
         default=str(_default_config_path()),
         help="Path to YAML config file (default: this directory's config.yaml)",
     )
-    parser.add_argument("--image-topic", type=str, default=str(defaults["image_topic"]))
-    parser.add_argument("--depth-topic", type=str, default=str(defaults["depth_topic"]))
+    parser.add_argument(
+        "--image-topic", type=str, default=str(defaults["image_topic"])
+    )
+    parser.add_argument(
+        "--depth-topic", type=str, default=str(defaults["depth_topic"])
+    )
     parser.add_argument(
         "--semantic-segmentation-topic",
         type=str,
         default=str(defaults["semantic_segmentation_topic"]),
     )
     parser.add_argument(
-        "--semantic-labels-topic", type=str, default=str(defaults["semantic_labels_topic"])
+        "--semantic-labels-topic",
+        type=str,
+        default=str(defaults["semantic_labels_topic"]),
     )
     parser.add_argument(
-        "--bbox-2d-tight-topic", type=str, default=str(defaults["bbox_2d_tight_topic"])
+        "--bbox-2d-tight-topic",
+        type=str,
+        default=str(defaults["bbox_2d_tight_topic"]),
     )
     parser.add_argument(
-        "--camera-info-topic", type=str, default=str(defaults["camera_info_topic"])
+        "--camera-info-topic",
+        type=str,
+        default=str(defaults["camera_info_topic"]),
     )
     parser.add_argument(
-        "--evaluate-service-name", type=str, default=str(defaults["evaluate_service_name"])
+        "--evaluate-service-name",
+        type=str,
+        default=str(defaults["evaluate_service_name"]),
     )
-    parser.add_argument("--output-dir", type=str, default=str(defaults["output_dir"]))
-    parser.add_argument("--jpeg-quality", type=int, default=int(defaults["jpeg_quality"]))
-    parser.add_argument("--thermalpad-label", type=str, default=str(defaults["thermalpad_label"]))
-    parser.add_argument("--liner-label", type=str, default=str(defaults["liner_label"]))
-    parser.add_argument("--target-label", type=str, default=str(defaults["target_label"]))
+    parser.add_argument(
+        "--output-dir", type=str, default=str(defaults["output_dir"])
+    )
+    parser.add_argument(
+        "--jpeg-quality", type=int, default=int(defaults["jpeg_quality"])
+    )
+    parser.add_argument(
+        "--thermalpad-label",
+        type=str,
+        default=str(defaults["thermalpad_label"]),
+    )
+    parser.add_argument(
+        "--liner-label", type=str, default=str(defaults["liner_label"])
+    )
+    parser.add_argument(
+        "--target-label", type=str, default=str(defaults["target_label"])
+    )
     parser.add_argument(
         "--bbox-json-top-per-class-only",
         type=coerce_bool,
@@ -121,7 +150,9 @@ def _build_arg_parser(defaults: Dict[str, Any]) -> argparse.ArgumentParser:
 def load_runtime_config(args=None) -> Dict[str, Any]:
     # First pass: discover the config path so YAML can feed argparse defaults.
     bootstrap_parser = argparse.ArgumentParser(add_help=False)
-    bootstrap_parser.add_argument("--config", type=str, default=str(_default_config_path()))
+    bootstrap_parser.add_argument(
+        "--config", type=str, default=str(_default_config_path())
+    )
     bootstrap_args, _ = bootstrap_parser.parse_known_args(args=args)
 
     config_path = Path(bootstrap_args.config)
@@ -145,5 +176,7 @@ def load_runtime_config(args=None) -> Dict[str, Any]:
         "thermalpad_label": parsed.thermalpad_label,
         "liner_label": parsed.liner_label,
         "target_label": parsed.target_label,
-        "bbox_json_top_per_class_only": coerce_bool(parsed.bbox_json_top_per_class_only),
+        "bbox_json_top_per_class_only": coerce_bool(
+            parsed.bbox_json_top_per_class_only
+        ),
     }
