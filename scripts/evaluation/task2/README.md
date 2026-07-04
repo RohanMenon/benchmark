@@ -125,7 +125,7 @@ Published by the scene's ROS2 bridge graph:
 - `image_raw`
 - `depth`
 - `semantic_segmentation`
-- `semantic_labels` 
+- `semantic_labels`
 - `bbox_2d_tight`
 - `camera_info`
 

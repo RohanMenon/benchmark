@@ -10,13 +10,12 @@ lightweight stubs.
 """
 
 import json
-from typing import Any, Dict, Optional, Tuple
+from typing import Any
 
 import numpy as np
-
 from image_utils import bbox_from_detection, iter_detection_classifications
 
-BBox = Tuple[float, float, float, float]
+BBox = tuple[float, float, float, float]
 
 
 # --------------------------------------------------------------------------- #
@@ -39,7 +38,7 @@ def bbox_intersection_area(a: BBox, b: BBox) -> float:
     return max(0.0, x_right - x_left) * max(0.0, y_bottom - y_top)
 
 
-def bbox_to_dict(bbox: BBox) -> Dict[str, float]:
+def bbox_to_dict(bbox: BBox) -> dict[str, float]:
     x1, y1, x2, y2 = bbox
     return {"x1": float(x1), "y1": float(y1), "x2": float(x2), "y2": float(y2)}
 
@@ -57,10 +56,11 @@ def detection_best_score(detection) -> float:
 
 
 def detection_matches_label(
-    detection, target_label: str, target_id: Optional[int]
+    detection, target_label: str, target_id: int | None
 ) -> bool:
-    # Isaac Sim's BBox2D bridge encodes class_id as either the label name or its integer
-    # ID as a string, depending on the bridge version; check all three forms.
+    # Isaac Sim's BBox2D bridge encodes class_id as either the label name
+    # or its integer ID as a string, depending on the bridge version;
+    # check all three forms.
     for class_id, _ in iter_detection_classifications(detection):
         class_id_raw = class_id.strip()
         if not class_id_raw:
@@ -80,8 +80,8 @@ def detection_matches_label(
 
 def select_best_bbox_for_label(
     bbox_msg, target_label: str, target_id: int
-) -> Optional[BBox]:
-    best_bbox: Optional[BBox] = None
+) -> BBox | None:
+    best_bbox: BBox | None = None
     best_score = float("-inf")
     for det in getattr(bbox_msg, "detections", []) or []:
         if not detection_matches_label(det, target_label, target_id):
@@ -96,7 +96,7 @@ def select_best_bbox_for_label(
     return best_bbox
 
 
-def parse_semantic_label_map(payload: str) -> Dict[str, int]:
+def parse_semantic_label_map(payload: str) -> dict[str, int]:
     try:
         obj = json.loads(payload)
     except json.JSONDecodeError as exc:
@@ -107,7 +107,7 @@ def parse_semantic_label_map(payload: str) -> Dict[str, int]:
     if not isinstance(obj, dict):
         raise ValueError("Semantic labels payload is not a JSON object")
 
-    label_to_id: Dict[str, int] = {}
+    label_to_id: dict[str, int] = {}
     for raw_key, raw_value in obj.items():
         try:
             label_id = int(raw_key)
@@ -136,7 +136,7 @@ def parse_semantic_label_map(payload: str) -> Dict[str, int]:
 
 
 def count_pixels_for_hint_label(
-    label_array: np.ndarray, label_name: str, semantic_hints: Dict[int, str]
+    label_array: np.ndarray, label_name: str, semantic_hints: dict[int, str]
 ) -> int:
     for raw_id, name in semantic_hints.items():
         if name == label_name:
@@ -154,11 +154,11 @@ def evaluate_thermalpad_target_iou(
     thermalpad_label: str,
     liner_label: str,
     target_label: str,
-    semantic_hints: Dict[int, str],
-    label_array: Optional[np.ndarray] = None,
+    semantic_hints: dict[int, str],
+    label_array: np.ndarray | None = None,
     current_frame_stamp: str = "",
     bbox_frame_stamp: str = "",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Compute bbox IoU between the active pad (liner/thermalpad) and target.
 
     ``label_array`` is the parsed int32 semantic mask, required only to resolve
@@ -174,7 +174,7 @@ def evaluate_thermalpad_target_iou(
     liner_id = label_to_id.get(liner_label)
     target_id = label_to_id.get(target_label)
 
-    base: Dict[str, Any] = {
+    base: dict[str, Any] = {
         "thermalpad_label": thermalpad_label,
         "liner_label": liner_label,
         "target_label": target_label,
@@ -189,7 +189,7 @@ def evaluate_thermalpad_target_iou(
 
     def _zero_result(
         orientation_case: str, target_bbox_val=None
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         target_area_val = (
             float(bbox_area(target_bbox_val))
             if target_bbox_val is not None
@@ -268,7 +268,8 @@ def evaluate_thermalpad_target_iou(
             if total_px > 0:
                 liner_ratio = liner_px / total_px
                 thermalpad_ratio = thermalpad_px / total_px
-                # 90 % dominance threshold: below this, the pad is visibly sideways.
+                # 90 % dominance threshold: below this, the pad is visibly
+                # sideways.
                 if liner_ratio > 0.9:
                     pad_bbox = liner_bbox
                     pad_source_label = liner_label

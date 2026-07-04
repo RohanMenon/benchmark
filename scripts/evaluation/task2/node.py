@@ -4,10 +4,11 @@
 
 """ROS2 node for the task2 eval camera service.
 
-Subscribes to the Isaac Sim eval-camera topics, and on each ``Trigger`` call
-snapshots the latest frame, saves all modalities, and computes pad-vs-target IoU.
-Heavy lifting is delegated to ``image_utils`` (conversions) and ``evaluation``
-(IoU + orientation), keeping this module focused on ROS plumbing and IO.
+Subscribes to the Isaac Sim eval-camera topics, and on each ``Trigger``
+call snapshots the latest frame, saves all modalities, and computes
+pad-vs-target IoU. Heavy lifting is delegated to ``image_utils``
+(conversions) and ``evaluation`` (IoU + orientation), keeping this
+module focused on ROS plumbing and IO.
 """
 
 import json
@@ -15,7 +16,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from threading import Lock
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import numpy as np
 import rclpy
@@ -62,9 +63,10 @@ class _Snapshot:
 
 
 class EvalCameraCaptureService(Node):
-    """ROS2 node that snapshots eval-camera streams and evaluates pad placement."""
+    """ROS2 node that snapshots eval-camera streams and evaluates
+    pad placement."""
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         super().__init__("eval_camera_capture_service")
 
         self._image_topic = str(config["image_topic"])
@@ -81,8 +83,9 @@ class EvalCameraCaptureService(Node):
             config["bbox_json_top_per_class_only"]
         )
 
-        # Subscription callbacks and the service handler can run on separate threads
-        # with a MultiThreadedExecutor; all _latest_* writes go through this lock.
+        # Subscription callbacks and the service handler can run on separate
+        # threads with a MultiThreadedExecutor; all _latest_* writes go
+        # through this lock.
         self._lock = Lock()
         self._latest_image = None
         self._latest_depth = None
@@ -92,7 +95,8 @@ class EvalCameraCaptureService(Node):
         self._latest_camera_info = None
 
         # Isaac Sim's ROS2 bridge publishes with BEST_EFFORT reliability;
-        # qos_profile_sensor_data matches that. A RELIABLE subscriber silently receives nothing.
+        # qos_profile_sensor_data matches that. A RELIABLE subscriber
+        # silently receives nothing.
         self.create_subscription(
             Image, self._image_topic, self._on_image, qos_profile_sensor_data
         )
@@ -129,7 +133,8 @@ class EvalCameraCaptureService(Node):
             )
         else:
             self.get_logger().warn(
-                "vision_msgs is not available; bbox overlays/evaluation are disabled. "
+                "vision_msgs is not available; bbox overlays/evaluation "
+                "are disabled. "
                 "Install ros-jazzy-vision-msgs in the runtime image."
             )
 
@@ -201,8 +206,8 @@ class EvalCameraCaptureService(Node):
 
         ts = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
         out = self._evaluate_output_dir
-        saved: List[Path] = []
-        missing: List[str] = []
+        saved: list[Path] = []
+        missing: list[str] = []
 
         try:
             rgb_bgr = self._save_rgb(out, ts, snap.image, saved)
@@ -211,7 +216,8 @@ class EvalCameraCaptureService(Node):
                 out, ts, snap.semantic, saved, missing
             )
             self._save_labels(out, ts, snap.labels, saved, missing)
-            # Modality snapshots above are written regardless; only evaluation requires both.
+            # Modality snapshots above are written regardless; only
+            # evaluation requires both.
             if snap.labels is None or snap.bbox is None:
                 raise ValueError(
                     "Evaluation requires semantic_labels and bbox_2d_tight"
@@ -228,9 +234,10 @@ class EvalCameraCaptureService(Node):
             info = f" frame_id={snap.camera_info.header.frame_id}"
         if missing:
             info += f" missing={','.join(missing)}"
+        is_correct = eval_result["is_orientation_correct"]
         eval_msg = (
             f" eval_iou={eval_result['iou_thermalpad_vs_target_current']:.4f}"
-            f" orientation={'correct' if eval_result['is_orientation_correct'] else 'wrong'}"
+            f" orientation={'correct' if is_correct else 'wrong'}"
             f"[{eval_result['orientation_case']}]"
         )
 
@@ -243,7 +250,7 @@ class EvalCameraCaptureService(Node):
     # ------------------------------------------------------------------ #
     # Per-modality save helpers (raise ValueError on hard failure)
     # ------------------------------------------------------------------ #
-    def _save_rgb(self, out, ts, image_msg, saved: List[Path]) -> np.ndarray:
+    def _save_rgb(self, out, ts, image_msg, saved: list[Path]) -> np.ndarray:
         rgb_bgr = image_utils.ros_image_to_bgr(image_msg)
         rgb_path = _artifact_path(out, "rgb", ts, "jpg")
         if not image_utils.write_image(rgb_path, rgb_bgr, self._jpeg_quality):
@@ -252,7 +259,7 @@ class EvalCameraCaptureService(Node):
         return rgb_bgr
 
     def _save_depth(
-        self, out, ts, depth_msg, saved: List[Path], missing: List[str]
+        self, out, ts, depth_msg, saved: list[Path], missing: list[str]
     ) -> None:
         if depth_msg is None:
             missing.append("depth")
@@ -268,12 +275,13 @@ class EvalCameraCaptureService(Node):
             saved.append(depth_png)
 
     def _save_semantic(
-        self, out, ts, seg_msg, saved: List[Path], missing: List[str]
-    ) -> Optional[np.ndarray]:
+        self, out, ts, seg_msg, saved: list[Path], missing: list[str]
+    ) -> np.ndarray | None:
         if seg_msg is None:
             missing.append("semantic_segmentation")
             return None
-        # Parse the int32 mask once; derive both the colorized .png and raw .npy from it.
+        # Parse the int32 mask once; derive both the colorized .png and
+        # raw .npy from it.
         label_array = image_utils.ros_image_to_label_array(seg_msg)
         seg_png = _artifact_path(out, "semantic_segmentation", ts, "png")
         if not image_utils.write_png(
@@ -290,7 +298,7 @@ class EvalCameraCaptureService(Node):
 
     @staticmethod
     def _save_labels(
-        out, ts, labels_msg, saved: List[Path], missing: List[str]
+        out, ts, labels_msg, saved: list[Path], missing: list[str]
     ) -> None:
         if labels_msg is None:
             missing.append("semantic_labels")
@@ -300,8 +308,8 @@ class EvalCameraCaptureService(Node):
         saved.append(labels_path)
 
     def _save_eval(
-        self, out, ts, snap: _Snapshot, label_array, saved: List[Path]
-    ) -> Dict[str, Any]:
+        self, out, ts, snap: _Snapshot, label_array, saved: list[Path]
+    ) -> dict[str, Any]:
         try:
             eval_result = evaluate_thermalpad_target_iou(
                 snap.bbox,
@@ -326,7 +334,7 @@ class EvalCameraCaptureService(Node):
         return eval_result
 
     def _save_bbox_artifacts(
-        self, out, ts, bbox_msg, rgb_bgr, saved: List[Path]
+        self, out, ts, bbox_msg, rgb_bgr, saved: list[Path]
     ) -> None:
         bbox_json = _artifact_path(out, "bbox2d_tight", ts, "json")
         bbox_payload = image_utils.bbox_2d_array_to_dict(
@@ -348,7 +356,7 @@ class EvalCameraCaptureService(Node):
         saved.append(overlay_path)
 
 
-def run(config: Dict[str, Any], args=None) -> None:
+def run(config: dict[str, Any], args=None) -> None:
     rclpy.init(args=args)
     node = EvalCameraCaptureService(config)
     try:

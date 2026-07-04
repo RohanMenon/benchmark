@@ -9,12 +9,10 @@ and numpy arrays only -- they hold no node state and import no ROS runtime, so
 they can be unit-tested with plain stubs.
 """
 
-from typing import Dict, Optional, Tuple
-
 import cv2
 import numpy as np
 
-BBox = Tuple[float, float, float, float]
+BBox = tuple[float, float, float, float]
 
 
 # --------------------------------------------------------------------------- #
@@ -148,13 +146,14 @@ def label_map_to_color(labels: np.ndarray) -> np.ndarray:
 # --------------------------------------------------------------------------- #
 # Bounding-box helpers
 # --------------------------------------------------------------------------- #
-def bbox_from_detection(detection) -> Optional[BBox]:
+def bbox_from_detection(detection) -> BBox | None:
     bbox = getattr(detection, "bbox", None)
     center = getattr(bbox, "center", None) if bbox is not None else None
     if center is None:
         return None
 
-    # vision_msgs ≥ 4.x nests xy under center.position; older versions expose x/y directly on center.
+    # vision_msgs ≥ 4.x nests xy under center.position; older versions expose
+    # x/y directly on center.
     center_pos = getattr(center, "position", center)
     cx = float(getattr(center_pos, "x", 0.0))
     cy = float(getattr(center_pos, "y", 0.0))
@@ -175,7 +174,8 @@ def iter_detection_classifications(detection):
         class_id = str(getattr(hypothesis, "class_id", ""))
         score = getattr(hypothesis, "score", None)
         if score is None:
-            # ObjectHypothesisWithPose stores score on .hypothesis; older ObjectHypothesis on the result.
+            # ObjectHypothesisWithPose stores score on .hypothesis;
+            # older ObjectHypothesis on the result.
             score = getattr(result, "score", None)
         yield class_id, float(score) if score is not None else None
 
@@ -221,7 +221,7 @@ def draw_bbox_overlay(image: np.ndarray, bbox_msg) -> np.ndarray:
 
 def bbox_2d_array_to_dict(
     bbox_msg, only_top_per_class: bool = False
-) -> Dict[str, object]:
+) -> dict[str, object]:
     detections_with_meta = []
     for det in getattr(bbox_msg, "detections", []):
         bbox_coords = bbox_from_detection(det)
@@ -267,7 +267,7 @@ def bbox_2d_array_to_dict(
         )
 
     if only_top_per_class:
-        best_by_class: Dict[str, Dict[str, object]] = {}
+        best_by_class: dict[str, dict[str, object]] = {}
         for item in detections_with_meta:
             class_id = str(item["primary_class_id"]) or "__unlabeled__"
             current_best = best_by_class.get(class_id)

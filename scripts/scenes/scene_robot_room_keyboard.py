@@ -750,9 +750,9 @@ def load_deformable_assets(
 def setup_deformable_camera(
     stage: Any,
 ) -> None:
+    import omni.graph.core as og
     from pxr import Gf as pxr_gf
     from pxr import UsdGeom as pxr_usd_geom
-    import omni.graph.core as og
 
     Gf: Any = pxr_gf
     UsdGeom: Any = pxr_usd_geom

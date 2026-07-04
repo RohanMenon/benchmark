@@ -5,7 +5,8 @@
 """Unit tests for the pure task2 evaluation logic (no ROS required).
 
 Run: python3 scripts/evaluation/task2/tests/test_evaluation.py
-Only depends on numpy. Builds duck-typed stubs mimicking vision_msgs detections.
+Only depends on numpy. Builds duck-typed stubs mimicking vision_msgs
+detections.
 """
 
 import json
@@ -21,8 +22,9 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import SEMANTIC_RAW_ID_NAME_HINTS  # noqa: E402
 from evaluation import evaluate_thermalpad_target_iou  # noqa: E402
 
-# semantic_labels topic mapping (starts at 0, no 'unlabeled') -- distinct from the
-# raw int32 mask scheme in SEMANTIC_RAW_ID_NAME_HINTS, on purpose.
+# semantic_labels topic mapping (starts at 0, no 'unlabeled') --
+# distinct from the raw int32 mask scheme in SEMANTIC_RAW_ID_NAME_HINTS,
+# on purpose.
 LABELS_PAYLOAD = json.dumps(
     {
         "0": {"class": "liner"},
@@ -60,7 +62,7 @@ def make_bbox_msg(detections):
 
 
 def mask(liner_px: int, thermalpad_px: int) -> np.ndarray:
-    """Build a flat int32 mask with given pixel counts (using raw-ID scheme)."""
+    """Build a flat int32 mask with given pixel counts (raw-ID scheme)."""
     liner_id = next(
         k for k, v in SEMANTIC_RAW_ID_NAME_HINTS.items() if v == "liner"
     )

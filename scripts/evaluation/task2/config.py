@@ -4,18 +4,18 @@
 
 """Runtime configuration for the task2 eval camera service.
 
-Defaults live in ``APP_DEFAULTS`` and ``config.yaml``; both can be overridden on
-the command line. ``load_runtime_config`` merges (in increasing priority):
-APP_DEFAULTS < config.yaml < CLI args.
+Defaults live in ``APP_DEFAULTS`` and ``config.yaml``; both can be
+overridden on the command line. ``load_runtime_config`` merges (in
+increasing priority): APP_DEFAULTS < config.yaml < CLI args.
 """
 
 import argparse
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import yaml
 
-APP_DEFAULTS: Dict[str, Any] = {
+APP_DEFAULTS: dict[str, Any] = {
     "evaluate_service_name": "/isaac/eval_camera/evaluate",
     "image_topic": "/isaac/eval_camera/image_raw",
     "depth_topic": "/isaac/eval_camera/depth",
@@ -32,11 +32,11 @@ APP_DEFAULTS: Dict[str, Any] = {
     "bbox_json_top_per_class_only": False,
 }
 
-# Raw int32 semantic-mask pixel value -> class name, for the current task2 scene.
-# It is only used to resolve the both-pads-visible case via pixel ratios; an
-# incorrect mapping silently breaks the both_liner_dominant / both_thermalpad_dominant
-# / sideways decision.
-SEMANTIC_RAW_ID_NAME_HINTS: Dict[int, str] = {
+# Raw int32 semantic-mask pixel value -> class name, for the current
+# task2 scene. It is only used to resolve the both-pads-visible case via
+# pixel ratios; an incorrect mapping silently breaks the
+# both_liner_dominant / both_thermalpad_dominant / sideways decision.
+SEMANTIC_RAW_ID_NAME_HINTS: dict[int, str] = {
     1: "unlabeled",
     2: "board",
     3: "thermalpad",
@@ -63,7 +63,7 @@ def _default_config_path() -> Path:
     return Path(__file__).with_name("config.yaml")
 
 
-def _load_yaml_config(config_path: Path) -> Dict[str, Any]:
+def _load_yaml_config(config_path: Path) -> dict[str, Any]:
     if not config_path.exists():
         return {}
     with config_path.open("r", encoding="utf-8") as file_obj:
@@ -81,7 +81,7 @@ def _load_yaml_config(config_path: Path) -> Dict[str, Any]:
     return dict(loaded)
 
 
-def _build_arg_parser(defaults: Dict[str, Any]) -> argparse.ArgumentParser:
+def _build_arg_parser(defaults: dict[str, Any]) -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Eval task2 camera capture and IoU evaluation service"
     )
@@ -89,7 +89,9 @@ def _build_arg_parser(defaults: Dict[str, Any]) -> argparse.ArgumentParser:
         "--config",
         type=str,
         default=str(_default_config_path()),
-        help="Path to YAML config file (default: this directory's config.yaml)",
+        help=(
+            "Path to YAML config file (default: this directory's config.yaml)"
+        ),
     )
     parser.add_argument(
         "--image-topic", type=str, default=str(defaults["image_topic"])
@@ -147,7 +149,7 @@ def _build_arg_parser(defaults: Dict[str, Any]) -> argparse.ArgumentParser:
     return parser
 
 
-def load_runtime_config(args=None) -> Dict[str, Any]:
+def load_runtime_config(args=None) -> dict[str, Any]:
     # First pass: discover the config path so YAML can feed argparse defaults.
     bootstrap_parser = argparse.ArgumentParser(add_help=False)
     bootstrap_parser.add_argument(
