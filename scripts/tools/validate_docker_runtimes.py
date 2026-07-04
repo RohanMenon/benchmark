@@ -18,7 +18,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 COMPOSE_FILE = REPO_ROOT / "docker" / "docker-compose.yaml"
 ENV_FILE = REPO_ROOT / "docker" / ".env.base"
-WORKSPACE_ROOT = "/workspace/IROS_Workshop"
+WORKSPACE_ROOT = "/workspace/EBiM_Challenge"
 
 
 @dataclass(frozen=True)
@@ -118,7 +118,7 @@ HOST_RUNTIME_DIRS = (
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
-            "Prepare, build, start, and validate the three IROS workshop "
+            "Prepare, build, start, and validate the three EBiM workshop "
             "Docker runtimes."
         )
     )
@@ -296,8 +296,8 @@ def python_runner_snippet() -> str:
         "fi; "
         "if command -v python >/dev/null 2>&1; then "
         "PY='python'; "
-        "elif command -v iros-python >/dev/null 2>&1; then "
-        "PY='iros-python'; "
+        "elif command -v ebim-python >/dev/null 2>&1; then "
+        "PY='ebim-python'; "
         "elif [ -x /isaac-sim/python.sh ]; then "
         "PY='/isaac-sim/python.sh'; "
         "elif [ -x /isaac-lab/isaaclab.sh ]; then "
@@ -321,8 +321,8 @@ def validate_mounts(container: str, runtime: Runtime) -> None:
     ]
     write_checks = " && ".join(
         (
-            f"touch {shlex.quote(target)}/.iros_write_test && "
-            f"rm {shlex.quote(target)}/.iros_write_test"
+            f"touch {shlex.quote(target)}/.ebim_write_test && "
+            f"rm {shlex.quote(target)}/.ebim_write_test"
         )
         for target in write_targets
     )
@@ -420,8 +420,8 @@ def validate_scripts(container: str) -> None:
             f"$PY -c {shlex.quote(syntax_check)} && "
             f"$PY -c {shlex.quote(path_check)} && "
             "$PY scripts/tools/inspect_usd.py "
-            "assets/robot_room.usd >/tmp/iros_workshop_robot_room.txt && "
-            "test -s /tmp/iros_workshop_robot_room.txt"
+            "assets/robot_room.usd >/tmp/ebim_robot_room.txt && "
+            "test -s /tmp/ebim_robot_room.txt"
         ),
     )
 

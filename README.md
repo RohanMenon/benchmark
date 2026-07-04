@@ -1,4 +1,4 @@
-# IROS Workshop Competition Repository
+# EBiM Challenge Repository
 
 This repository provides a workshop-focused Isaac Sim environment for an international competition. The active workflow uses `assets/robot_room.usd` as the base scene and launches the mobile dual-arm robot through Isaac Sim. Older tabletop scene generators are kept only for reference.
 
@@ -7,7 +7,7 @@ For the full developer workflow, see [`docs/developer_setup.md`](docs/developer_
 ## Repository Layout
 
 ```text
-IROS_Workshop/
+EBiM_Challenge/
 ├── assets/                      # USD assets and generated scene files
 │   └── tabletop_task_scene_DEMO # Scene with Commandable via ROS mobile_Fr3_duo
 ├── docker/                      # Docker Compose runtimes for Isaac Sim and Isaac Lab
@@ -89,19 +89,19 @@ The Docker stack is parameterized in `docker/.env.base` and `docker/docker-compo
 
 ### Isaac Sim 5.1.0
 - Image: `nvcr.io/nvidia/isaac-sim:5.1.0`
-- Local tag: `isaac-sim-5.1.0:iros2026-ebim`
+- Local tag: `isaac-sim-5.1.0:ebim2026`
 - Compose profile: `isaac-sim-5.1.0`
 - Intended for GUI and simulation workflows with X11 support.
 
 ### Isaac Sim 6.0.0-dev2
 - Image: `nvcr.io/nvidia/isaac-sim:6.0.0-dev2`
-- Local tag: `isaac-sim-6.0.0-dev2:iros2026-ebim`
+- Local tag: `isaac-sim-6.0.0-dev2:ebim2026`
 - Compose profile: `isaac-sim-6.0.0`
 - Uses the currently documented pre-GA container tag.
 
 ### Isaac Lab 2.3.2
 - Image: `nvcr.io/nvidia/isaac-lab:2.3.2`
-- Local tag: `isaac-lab-2.3.2:iros2026-ebim`
+- Local tag: `isaac-lab-2.3.2:ebim2026`
 - Compose profile: `isaac-lab-2.3.2`
 - Documented as an alternative runtime. The primary workshop workflow remains the Isaac Sim images above.
 
@@ -127,13 +127,13 @@ touch "$XAUTHORITY"
 All container caches and runtime data are stored under:
 
 ```text
-${HOME}/docker/iros-workshop
+${HOME}/docker/ebim-challenge
 ```
 
 Create the required directories before the first launch. A typical layout is:
 
 ```text
-~/docker/iros-workshop/
+~/docker/ebim-challenge/
 ├── isaac-sim-5.1.0/
 │   ├── cache/main/ov
 │   ├── cache/main/warp
@@ -182,11 +182,11 @@ Bootstrap the versioned cache layout with:
 ```bash
 python3 scripts/tools/validate_docker_runtimes.py --prepare-dirs --skip-script-check
 sudo chown -R "${HOST_UID:-$(id -u)}:${HOST_GID:-$(id -g)}" \
-  "$HOME/docker/iros-workshop/isaac-sim-5.1.0" \
-  "$HOME/docker/iros-workshop/isaac-sim-6.0.0"
+  "$HOME/docker/ebim-challenge/isaac-sim-5.1.0" \
+  "$HOME/docker/ebim-challenge/isaac-sim-6.0.0"
 sudo chmod -R g+rwX \
-  "$HOME/docker/iros-workshop/isaac-sim-5.1.0" \
-  "$HOME/docker/iros-workshop/isaac-sim-6.0.0"
+  "$HOME/docker/ebim-challenge/isaac-sim-5.1.0" \
+  "$HOME/docker/ebim-challenge/isaac-sim-6.0.0"
 ```
 
 The compose stack persists the main Kit cache, CUDA compute cache,
@@ -259,14 +259,14 @@ Launch the demo from the host:
 
 ```bash
 docker exec -it isaac-sim-5-1-0-workshop bash -lc \
-  'cd /workspace/IROS_Workshop && python scripts/scenes/scene_robot_room_keyboard.py --task task3'
+  'cd /workspace/EBiM_Challenge && python scripts/scenes/scene_robot_room_keyboard.py --task task3'
 ```
 
 To use a different room USD, pass `--room-usd`, for example:
 
 ```bash
 docker exec -it isaac-sim-5-1-0-workshop bash -lc \
-  'cd /workspace/IROS_Workshop && python scripts/scenes/scene_robot_room_keyboard.py --room-usd assets/robot_room.usd'
+  'cd /workspace/EBiM_Challenge && python scripts/scenes/scene_robot_room_keyboard.py --room-usd assets/robot_room.usd'
 ```
 
 You can still override the preset with `--robot-x`, `--robot-y`, and
@@ -286,7 +286,7 @@ Isaac Sim starts:
 
 ```bash
 docker exec -it isaac-sim-5-1-0-workshop bash -lc \
-  'cd /workspace/IROS_Workshop && python scripts/scenes/scene_robot_room_keyboard.py --task task3 --ros2-bridge fastdds'
+  'cd /workspace/EBiM_Challenge && python scripts/scenes/scene_robot_room_keyboard.py --task task3 --ros2-bridge fastdds'
 ```
 
 Use `--ros2-bridge cyclonedds` if you want CycloneDDS instead of FastDDS. The
@@ -337,7 +337,7 @@ docker compose --env-file docker/.env.base -f docker/docker-compose.yaml down
 The full repository is mounted into each container at:
 
 ```text
-/workspace/IROS_Workshop
+/workspace/EBiM_Challenge
 ```
 
 This makes live editing from the host available in all supported container targets.
@@ -573,8 +573,8 @@ your container UID/GID:
 ```bash
 python3 scripts/tools/validate_docker_runtimes.py --prepare-dirs --skip-script-check
 sudo chown -R "${HOST_UID:-$(id -u)}:${HOST_GID:-$(id -g)}" \
-  "$HOME/docker/iros-workshop/isaac-sim-5.1.0" \
-  "$HOME/docker/iros-workshop/isaac-sim-6.0.0"
+  "$HOME/docker/ebim-challenge/isaac-sim-5.1.0" \
+  "$HOME/docker/ebim-challenge/isaac-sim-6.0.0"
 docker compose --env-file docker/.env.base -f docker/docker-compose.yaml \
   --profile isaac-sim-5.1.0 up -d --force-recreate isaac-sim-5-1-0
 ```
@@ -590,7 +590,7 @@ from process startup, and stores ROS logs under `/isaac-sim/kit/logs/ros`.
 After changes, verify the following:
 
 1. `docker compose` resolves all configured profiles.
-2. The repository appears inside each container at `/workspace/IROS_Workshop`.
+2. The repository appears inside each container at `/workspace/EBiM_Challenge`.
 3. Isaac Sim GUI launches correctly through X11.
 4. `scripts/scenes/scene_robot_room_keyboard.py --task task3` starts and resolves all required USD assets.
 5. `third_party/franka_description/urdfs/mobile_fr3_duo_v0_2_franka_hand.usd` is available.

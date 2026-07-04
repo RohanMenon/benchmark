@@ -1,4 +1,4 @@
-name: iros-workshop
+name: ebim-challenge
 
 x-common-env: &common-env
   ACCEPT_EULA: ${ACCEPT_EULA}

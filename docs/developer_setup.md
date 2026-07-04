@@ -37,7 +37,7 @@ variables and does not expand `${...}` values in the compose model.
 ## Repository Layout
 
 ```text
-IROS_Workshop/
+EBiM_Challenge/
 |-- assets/                     # USD assets and generated scenes
 |-- docker/                     # Dockerfile, compose stack, runtime env
 |-- docs/                       # Developer docs and images
@@ -53,7 +53,7 @@ IROS_Workshop/
 All containers mount the repository at:
 
 ```text
-/workspace/IROS_Workshop
+/workspace/EBiM_Challenge
 ```
 
 ## Docker Runtime Targets
@@ -63,21 +63,21 @@ image:
 
 | Profile | Service | Local image tag | Base image |
 | --- | --- | --- | --- |
-| `isaac-sim-5.1.0` | `isaac-sim-5-1-0` | `isaac-sim-5.1.0:iros2026-ebim` | `nvcr.io/nvidia/isaac-sim:5.1.0` |
-| `isaac-sim-6.0.0` | `isaac-sim-6-0-0` | `isaac-sim-6.0.0-dev2:iros2026-ebim` | `nvcr.io/nvidia/isaac-sim:6.0.0-dev2` |
-| `isaac-lab-2.3.2` | `isaac-lab-2-3-2` | `isaac-lab-2.3.2:iros2026-ebim` | `nvcr.io/nvidia/isaac-lab:2.3.2` |
+| `isaac-sim-5.1.0` | `isaac-sim-5-1-0` | `isaac-sim-5.1.0:ebim2026` | `nvcr.io/nvidia/isaac-sim:5.1.0` |
+| `isaac-sim-6.0.0` | `isaac-sim-6-0-0` | `isaac-sim-6.0.0-dev2:ebim2026` | `nvcr.io/nvidia/isaac-sim:6.0.0-dev2` |
+| `isaac-lab-2.3.2` | `isaac-lab-2-3-2` | `isaac-lab-2.3.2:ebim2026` | `nvcr.io/nvidia/isaac-lab:2.3.2` |
 
 Persistent cache and runtime data live under:
 
 ```text
-${HOME}/docker/iros-workshop
+${HOME}/docker/ebim-challenge
 ```
 
 The Isaac Sim roots intentionally mirror NVIDIA's documented cache layout, but
 with one version-specific suffix per image:
 
 ```text
-~/docker/iros-workshop/
+~/docker/ebim-challenge/
 |-- isaac-sim-5.1.0/
 |   |-- cache/main/ov
 |   |-- cache/main/warp
@@ -122,11 +122,11 @@ If GUI startup later reports cache write errors, fix ownership:
 
 ```bash
 sudo chown -R "${HOST_UID:-$(id -u)}:${HOST_GID:-$(id -g)}" \
-  "$HOME/docker/iros-workshop/isaac-sim-5.1.0" \
-  "$HOME/docker/iros-workshop/isaac-sim-6.0.0"
+  "$HOME/docker/ebim-challenge/isaac-sim-5.1.0" \
+  "$HOME/docker/ebim-challenge/isaac-sim-6.0.0"
 sudo chmod -R g+rwX \
-  "$HOME/docker/iros-workshop/isaac-sim-5.1.0" \
-  "$HOME/docker/iros-workshop/isaac-sim-6.0.0"
+  "$HOME/docker/ebim-challenge/isaac-sim-5.1.0" \
+  "$HOME/docker/ebim-challenge/isaac-sim-6.0.0"
 ```
 
 ## Build And Validate All Containers
@@ -134,7 +134,7 @@ sudo chmod -R g+rwX \
 The validation helper prepares host cache directories, builds all three local
 runtime images in parallel, starts the containers, then validates:
 
-- repository mount at `/workspace/IROS_Workshop`,
+- repository mount at `/workspace/EBiM_Challenge`,
 - runtime cache/data mounts,
 - X11 environment and mounted X11 files,
 - host network mode,
@@ -198,7 +198,7 @@ docker exec -it isaac-lab-2-3-2-workshop bash
 Inside any container:
 
 ```bash
-cd /workspace/IROS_Workshop
+cd /workspace/EBiM_Challenge
 ```
 
 ## Isaac Sim Robot Room Workflow
@@ -345,7 +345,7 @@ python scripts/newton_examples/example_rigid_table_bowl_beans.py --viewer gl
 ```
 
 The tabletop examples resolve USD assets from `assets/` by default. Use
-`--assets-dir /path/to/assets` or set `IROS_WORKSHOP_ASSETS_DIR` to point at a
+`--assets-dir /path/to/assets` or set `EBIM_CHALLENGE_ASSETS_DIR` to point at a
 different asset directory.
 
 ## Troubleshooting
@@ -374,7 +374,7 @@ xhost +local:docker
 ```
 
 If a container cannot write cache files, fix ownership of the relevant
-directory under `${HOME}/docker/iros-workshop`.
+directory under `${HOME}/docker/ebim-challenge`.
 
 If scene scripts cannot find assets, confirm you are running from the mounted
 repository:

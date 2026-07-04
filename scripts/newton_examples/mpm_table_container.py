@@ -549,7 +549,7 @@ def _resolve_assets_dir(raw_assets_dir: str | None) -> Path:
     candidates: list[Path] = []
     if raw_assets_dir:
         candidates.append(Path(raw_assets_dir).expanduser())
-    for env_name in ("IROS_WORKSHOP_ASSETS_DIR", "NEWTON_ASSETS_DIR"):
+    for env_name in ("EBIM_CHALLENGE_ASSETS_DIR", "NEWTON_ASSETS_DIR"):
         env_value = os.environ.get(env_name)
         if env_value:
             candidates.append(Path(env_value).expanduser())
@@ -558,7 +558,7 @@ def _resolve_assets_dir(raw_assets_dir: str | None) -> Path:
     script_path = Path(__file__).resolve()
     candidates.extend(
         [
-            cwd / "../IROS_Workshop/assets",
+            cwd / "../EBiM_Challenge/assets",
             cwd / "assets",
             script_path.parents[2] / "assets",
         ]
