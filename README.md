@@ -4,10 +4,30 @@ This repository provides a workshop-focused Isaac Sim environment for an interna
 
 For the full developer workflow, see [`docs/developer_setup.md`](docs/developer_setup.md).
 
+## Task 1 — Mobile FR3 Duo Teleoperation (Isaac Lab + Newton)
+
+[`task1_isaacsim/`](task1_isaacsim/README.md) contains the Isaac Sim / Isaac Lab
+implementation of Task 1: teleoperating the mobile dual-arm FR3 Duo on the
+Newton / MJWarp backend, with an optional deformable-cable board-plugging world.
+Keyboard is the default mobile-base input; GELLO leader arms + USB foot pedal is
+the tested configuration. The teleoperation input devices come from the separate
+[`EBiM-Benchmark/teleoperation`](https://github.com/EBiM-Benchmark/teleoperation)
+repository. A MuJoCo variant (`task1_mujoco/`) is planned as a sibling directory.
+
+See [`task1_isaacsim/README.md`](task1_isaacsim/README.md) for full setup and run
+instructions. Quick start (from the repo root, after the one-time setup):
+
+```bash
+EMBODIMENT=fr3duo_mobile bash task1_isaacsim/scripts/run_isaaclab_newton_teleop.sh \
+  --usd-path assets/Robotiq_2f_85_with_d405_mobile_fr3_duo_v0_2.usd \
+  --controller-mode position --with-keyboard-teleop
+```
+
 ## Repository Layout
 
 ```text
 EBiM_Challenge/
+├── task1_isaacsim/              # Task 1: mobile FR3 Duo teleoperation (Isaac Lab + Newton)
 ├── assets/                      # USD assets and generated scene files
 │   └── tabletop_task_scene_DEMO # Scene with Commandable via ROS mobile_Fr3_duo
 ├── docker/                      # Docker Compose runtimes for Isaac Sim and Isaac Lab
