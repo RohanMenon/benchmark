@@ -127,36 +127,36 @@
     <material name="mat_mat_264" texture="tex_mat264" texuniform="true" texrepeat="1 1" rgba="1 1 1 1" />
     <material name="mat_mat_30" rgba="0.1176 0.1176 0.1176 1" />
     <!-- 3DMax room scene meshes -->
-    <mesh inertia="shell" name="mesh_Mat3d66_1141745_6_2506" file="scene_3dmax/scene_Mat3d66_1141745_6_2506.obj" />
-    <mesh inertia="shell" name="mesh_Mat3d66_1698082_32_7805" file="scene_3dmax/scene_Mat3d66_1698082_32_7805.obj" />
-    <mesh inertia="shell" name="mesh_Mat3d66_1698082_33_8822" file="scene_3dmax/scene_Mat3d66_1698082_33_8822.obj" />
-    <mesh inertia="shell" name="mesh_Mat3d66_1698082_34_7025" file="scene_3dmax/scene_Mat3d66_1698082_34_7025.obj" />
-    <mesh inertia="shell" name="mesh_Mat3d66_1698082_5_2827" file="scene_3dmax/scene_Mat3d66_1698082_5_2827.obj" />
-    <mesh inertia="shell" name="mesh_Mat3d66_1698082_90_17" file="scene_3dmax/scene_Mat3d66_1698082_90_17.obj" />
-    <mesh inertia="shell" name="mesh_Mat3d66_517392_3_464" file="scene_3dmax/scene_Mat3d66_517392_3_464.obj" />
-    <mesh inertia="shell" name="mesh_Mat3d66_8455843_10_96099" file="scene_3dmax/scene_Mat3d66_8455843_10_96099.obj" />
-    <mesh inertia="shell" name="mesh_Mat3d66_8455843_11_98565" file="scene_3dmax/scene_Mat3d66_8455843_11_98565.obj" />
-    <mesh inertia="shell" name="mesh_Mat3d66_8455843_12_76457" file="scene_3dmax/scene_Mat3d66_8455843_12_76457.obj" />
-    <mesh inertia="shell" name="mesh_Mat3d66_9313820_34_87230" file="scene_3dmax/scene_Mat3d66_9313820_34_87230.obj" />
-    <mesh inertia="shell" name="mesh_Mat3d66_9313820_48_69112" file="scene_3dmax/scene_Mat3d66_9313820_48_69112.obj" />
-    <mesh inertia="shell" name="mesh_Mat3d66_9313820_50_54492" file="scene_3dmax/scene_Mat3d66_9313820_50_54492.obj" />
-    <mesh inertia="shell" name="mesh_Material_33" file="scene_3dmax/scene_Material_33.obj" />
-    <mesh inertia="shell" name="mesh_Material_5" file="scene_3dmax/scene_Material_5.obj" />
-    <mesh inertia="shell" name="mesh_USD_Default_Grey" file="scene_3dmax/scene_USD_Default_Grey.obj" />
-    <mesh inertia="shell" name="mesh_default" file="scene_3dmax/scene_default.obj" />
-    <mesh inertia="shell" name="mesh_mat_255" file="scene_3dmax/scene_mat_255.obj" />
-    <mesh inertia="shell" name="mesh_mat_256" file="scene_3dmax/scene_mat_256.obj" />
-    <mesh inertia="shell" name="mesh_mat_257" file="scene_3dmax/scene_mat_257.obj" />
-    <mesh inertia="shell" name="mesh_mat_258" file="scene_3dmax/scene_mat_258.obj" />
-    <mesh inertia="shell" name="mesh_mat_259" file="scene_3dmax/scene_mat_259.obj" />
-    <mesh inertia="shell" name="mesh_mat_260" file="scene_3dmax/scene_mat_260.obj" />
-    <mesh inertia="shell" name="mesh_mat_261" file="scene_3dmax/scene_mat_261.obj" />
-    <mesh inertia="shell" name="mesh_mat_262" file="scene_3dmax/scene_mat_262.obj" />
-    <mesh inertia="shell" name="mesh_mat_263" file="scene_3dmax/scene_mat_263.obj" />
-    <mesh inertia="shell" name="mesh_mat_264" file="scene_3dmax/scene_mat_264.obj" />
-    <mesh inertia="shell" name="mesh_mat_30" file="scene_3dmax/scene_mat_30.obj" />
-    <mesh inertia="shell" name="mesh_mat_255_transparent_ceiling" file="scene_3dmax/scene_mat_255_transparent_ceiling.obj" />
-    <mesh inertia="shell" name="mesh_Mat3d66_9313820_34_87230_transparent_ceiling" file="scene_3dmax/scene_Mat3d66_9313820_34_87230_transparent_ceiling.obj" />
+    <mesh inertia="shell" name="mesh_Mat3d66_1141745_6_2506" file="scene_3dmax_lod/scene_Mat3d66_1141745_6_2506.obj" />
+    <mesh inertia="shell" name="mesh_Mat3d66_1698082_32_7805" file="scene_3dmax_lod/scene_Mat3d66_1698082_32_7805.obj" />
+    <mesh inertia="shell" name="mesh_Mat3d66_1698082_33_8822" file="scene_3dmax_lod/scene_Mat3d66_1698082_33_8822.obj" />
+    <mesh inertia="shell" name="mesh_Mat3d66_1698082_34_7025" file="scene_3dmax_lod/scene_Mat3d66_1698082_34_7025.obj" />
+    <mesh inertia="shell" name="mesh_Mat3d66_1698082_5_2827" file="scene_3dmax_lod/scene_Mat3d66_1698082_5_2827.obj" />
+    <mesh inertia="shell" name="mesh_Mat3d66_1698082_90_17" file="scene_3dmax_lod/scene_Mat3d66_1698082_90_17.obj" />
+    <mesh inertia="shell" name="mesh_Mat3d66_517392_3_464" file="scene_3dmax_lod/scene_Mat3d66_517392_3_464.obj" />
+    <mesh inertia="shell" name="mesh_Mat3d66_8455843_10_96099" file="scene_3dmax_lod/scene_Mat3d66_8455843_10_96099.obj" />
+    <mesh inertia="shell" name="mesh_Mat3d66_8455843_11_98565" file="scene_3dmax_lod/scene_Mat3d66_8455843_11_98565.obj" />
+    <mesh inertia="shell" name="mesh_Mat3d66_8455843_12_76457" file="scene_3dmax_lod/scene_Mat3d66_8455843_12_76457.obj" />
+    <mesh inertia="shell" name="mesh_Mat3d66_9313820_34_87230" file="scene_3dmax_lod/scene_Mat3d66_9313820_34_87230.obj" />
+    <mesh inertia="shell" name="mesh_Mat3d66_9313820_48_69112" file="scene_3dmax_lod/scene_Mat3d66_9313820_48_69112.obj" />
+    <mesh inertia="shell" name="mesh_Mat3d66_9313820_50_54492" file="scene_3dmax_lod/scene_Mat3d66_9313820_50_54492.obj" />
+    <mesh inertia="shell" name="mesh_Material_33" file="scene_3dmax_lod/scene_Material_33.obj" />
+    <mesh inertia="shell" name="mesh_Material_5" file="scene_3dmax_lod/scene_Material_5.obj" />
+    <mesh inertia="shell" name="mesh_USD_Default_Grey" file="scene_3dmax_lod/scene_USD_Default_Grey.obj" />
+    <mesh inertia="shell" name="mesh_default" file="scene_3dmax_lod/scene_default.obj" />
+    <mesh inertia="shell" name="mesh_mat_255" file="scene_3dmax_lod/scene_mat_255.obj" />
+    <mesh inertia="shell" name="mesh_mat_256" file="scene_3dmax_lod/scene_mat_256.obj" />
+    <mesh inertia="shell" name="mesh_mat_257" file="scene_3dmax_lod/scene_mat_257.obj" />
+    <mesh inertia="shell" name="mesh_mat_258" file="scene_3dmax_lod/scene_mat_258.obj" />
+    <mesh inertia="shell" name="mesh_mat_259" file="scene_3dmax_lod/scene_mat_259.obj" />
+    <mesh inertia="shell" name="mesh_mat_260" file="scene_3dmax_lod/scene_mat_260.obj" />
+    <mesh inertia="shell" name="mesh_mat_261" file="scene_3dmax_lod/scene_mat_261.obj" />
+    <mesh inertia="shell" name="mesh_mat_262" file="scene_3dmax_lod/scene_mat_262.obj" />
+    <mesh inertia="shell" name="mesh_mat_263" file="scene_3dmax_lod/scene_mat_263.obj" />
+    <mesh inertia="shell" name="mesh_mat_264" file="scene_3dmax_lod/scene_mat_264.obj" />
+    <mesh inertia="shell" name="mesh_mat_30" file="scene_3dmax_lod/scene_mat_30.obj" />
+    <mesh inertia="shell" name="mesh_mat_255_transparent_ceiling" file="scene_3dmax_lod/scene_mat_255_transparent_ceiling.obj" />
+    <mesh inertia="shell" name="mesh_Mat3d66_9313820_34_87230_transparent_ceiling" file="scene_3dmax_lod/scene_Mat3d66_9313820_34_87230_transparent_ceiling.obj" />
     <!-- robot materials from USD (OmniPBR diffuse_color_constant) -->
     <!-- Shell_White (1,1,1) → FR3 arm links 0-7 -->
     <material name="mat_fr3_arm"      rgba="1 1 1 1"             specular="0.55" shininess="0.55" />
