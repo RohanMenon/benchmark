@@ -499,5 +499,9 @@ Copyright (c) 2026 **2houyuhang**. Licensed under the
 attribution notices when using or modifying it.
 
 `mnet_client-ros_2` is the official [ManipulationNet](https://manipulation-net.org)
-client (Apache-2.0), vendored unmodified with unrelated task assets removed.
-Scene and robot assets are provided for research and benchmark use.
+client (Apache-2.0), vendored with non-runtime content removed: other
+tasks' assets, the physical board's reference CAD files, and documentation
+images. The complete client — including everything trimmed here — is
+available upstream via the [mnet client docs](https://mnet-client.readthedocs.io/)
+and [manipulation-net.org](https://manipulation-net.org/). Scene and robot
+assets are provided for research and benchmark use.
