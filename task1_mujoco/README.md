@@ -43,6 +43,18 @@ There are two ways to run that process, for two different purposes:
 Practice natively until you are comfortable, then score in Docker —
 physics, controls and IK are identical on both sides.
 
+**What works where** (details and verification status in
+[Teleoperation options](#teleoperation-options)):
+
+| You want to... | Windows | Native Ubuntu |
+|---|---|---|
+| Practice — keyboard / gamepad / VR | ✅ `start.bat` | ✅ `./start.sh` |
+| Scored eval — keyboard | ❌ (WSL2 can't reach 25 fps) | ✅ `./eval.sh sim` + `client` |
+| Scored eval — gamepad | ❌ | ✅ `./eval.sh gamepad` + `client` |
+| Scored eval — VR | ❌ | ✅ native sim + Docker client ([recipe](#quick-start--the-scored-evaluation-docker-step-by-step)) |
+| GELLO (needs ROS 2) | ❌ | ✅ via the Docker image, or natively ([appendix](#appendix--fully-docker-free-evaluation-ubuntu)) |
+| Eval without Docker at all | ❌ | ⚠️ possible ([appendix](#appendix--fully-docker-free-evaluation-ubuntu)) |
+
 ## Architecture
 
 ```
@@ -397,6 +409,52 @@ keyboard/gamepad runs over ROS are in community testing — reports welcome.
 | `--profile` | print loop/control/physics/render timing once per second |
 | `--render-hz N` | cap the viewer refresh rate |
 | `--help` | the full per-mode option list |
+
+## Appendix — fully Docker-free evaluation (Ubuntu)
+
+Community testing — the standard scored path is Docker (`eval.sh`). If you
+cannot use Docker at all, both halves of the eval stack can run natively on
+Ubuntu 22.04 with ROS 2 Humble:
+
+**1. The simulator with the eval bridge** — the conda env cannot import an
+apt-installed `rclpy` (interpreter mismatch), so use the system Python via
+a venv (same recipe as the VR evaluation above; pick any `--input`):
+
+```bash
+source /opt/ros/humble/setup.bash
+python3 -m venv --system-site-packages ~/.venv-duo-teleop-ros
+source ~/.venv-duo-teleop-ros/bin/activate
+pip install mujoco==3.9.0 "numpy>=2,<3" glfw==2.10.0 pygame==2.6.1 \
+    "pillow>=10" pyopenxr==1.1.5301 PyOpenGL==3.1.10 openvr==2.12.1401 \
+    python-xlib
+cd robotiq_duo_full_scene_minimal_core
+python main.py --input keyboard --mnet      # or gamepad / vr / gello
+```
+
+**2. The official client, built natively** (its own terminal, system
+Python — not the venv: `cv_bridge` needs `numpy<2`, which is why the two
+halves keep separate environments):
+
+```bash
+sudo apt install ros-humble-ros-base ros-humble-cv-bridge \
+    python3-colcon-common-extensions python3-pip
+pip install "numpy>=1.24,<2" opencv-python "pydantic>=2,<3" requests tqdm \
+    pupil-apriltags pybullet
+mkdir -p ~/mnet_ws/src && ln -s "$(pwd)/mnet_client-ros_2" ~/mnet_ws/src/mnet_client
+( cd ~/mnet_ws && source /opt/ros/humble/setup.bash && colcon build )
+```
+
+Before running it, edit `mnet_client-ros_2/config/team_config.json` and
+change `file_dir` from the container path `/ws/out` to a writable local
+directory (e.g. `/tmp/mnet_out`). Then:
+
+```bash
+source /opt/ros/humble/setup.bash && source ~/mnet_ws/install/setup.bash
+ros2 run mnet_client local_test
+```
+
+The session flow is identical to the Docker walkthrough. Neither half has
+been validated end-to-end natively yet — reports welcome.
 
 ## Troubleshooting
 
