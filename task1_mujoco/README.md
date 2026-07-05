@@ -208,12 +208,29 @@ see the [mnet docs](https://mnet-client.readthedocs.io/)).
 ./eval.sh gamepad          # terminal 2 stays ./eval.sh client
 ```
 
-**Evaluating with VR** is not possible through the Docker route — no
-container can reach a headset. A VR-scored run would need ROS 2 inside the
-native environment (e.g., RoboStack) so the native sim can run
-`--input vr --mnet` while the client stays in Docker; this path is not yet
-packaged or validated. If your team wants VR-scored runs, please open an
-issue so it gets prioritized.
+**Evaluating with VR — native sim + native ROS 2** (community testing): VR
+cannot enter a container, but the sim itself runs the eval bridge natively
+whenever `rclpy` is importable. Note the conda env cannot see an apt-based
+ROS (Python version mismatch) — use the system Python via a venv instead.
+On Ubuntu with ROS 2 Humble installed and your headset connected (WiVRn):
+
+```bash
+source /opt/ros/humble/setup.bash
+python3 -m venv --system-site-packages ~/.venv-duo-teleop-ros
+source ~/.venv-duo-teleop-ros/bin/activate
+pip install mujoco==3.9.0 "numpy>=2,<3" glfw==2.10.0 pygame==2.6.1 \
+    "pillow>=10" pyopenxr==1.1.5301 PyOpenGL==3.1.10 openvr==2.12.1401 \
+    python-xlib
+cd robotiq_duo_full_scene_minimal_core
+python main.py --input vr --mnet     # terminal 1: native VR sim + eval bridge
+```
+
+Terminal 2 stays `./eval.sh client` — its container runs on the host
+network and discovers the native sim's topics directly. The session flow is
+unchanged (type `code <TEXT>` into terminal 1; report completion with `F`
+in the desktop viewer window). A conda-based alternative is RoboStack
+(ROS 2 inside the conda env, works on Windows too). Both recipes are in
+community testing — reports welcome.
 
 ## Teleoperation options
 
