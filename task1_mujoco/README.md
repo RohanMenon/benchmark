@@ -249,13 +249,26 @@ Two things cannot work inside any container, by nature of what they need:
 uncomment the `devices:` line in `release/compose.yaml`), and **VR**
 requires direct host device/driver access — practice VR natively.
 
-## Prebuilt image (planned — not published yet)
+## Building the Docker images
 
-The Docker launchers currently **build** the image from this repo (that is
-why you clone first). Once the image is published to a container registry,
-cloning becomes optional: you will be able to `docker compose pull` a ready
-image using only `release/compose.dist.yaml` in an empty folder. Until that
-registry location is announced, `docker compose pull` has nothing to pull.
+Distribution is by `git clone`: the images are **built locally from this
+directory**, there is nothing to pull from a registry. Normally you never
+do this by hand — `./eval.sh sim` rebuilds its image incrementally on every
+start (code changes are picked up automatically), and `./docker-run.sh`
+builds its image on first use (`./docker-run.sh build` forces a rebuild).
+
+To build manually:
+
+```bash
+# evaluation image (ROS 2 Humble + official mnet client + simulator, ~3.7 GB)
+docker compose -f robotiq_duo_full_scene_minimal_core/release/compose.yaml build sim
+
+# ROS-free practice image (smaller; keyboard/gamepad teleop only)
+docker compose -f robotiq_duo_full_scene_minimal_core/release/compose.yaml build runtime
+```
+
+The first build downloads the base image and Python wheels (several
+minutes); later builds reuse the cache and only re-copy changed sources.
 
 ## Controls
 
