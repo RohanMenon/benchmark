@@ -201,19 +201,19 @@ of `local_test` and put your real `team_unique_code` into
 `mnet_client-ros_2/config/team_config.json` (attempts are rate-limited —
 see the [mnet docs](https://mnet-client.readthedocs.io/)).
 
-**Evaluating with other input devices**: the sim service defaults to the
-keyboard. On native-Linux Docker a gamepad works too — uncomment the
-`devices:` block in `release/compose.yaml`, then start the sim as:
+**Evaluating with a gamepad** (native-Linux Docker only — WSL2 has no
+`/dev/input` passthrough): plug the pad in and replace step 2 with
 
 ```bash
-docker compose -f robotiq_duo_full_scene_minimal_core/release/compose.yaml \
-  run --rm sim bash -lc "source /opt/ros/humble/setup.bash \
-  && source /ws/install/setup.bash && python3 main.py --input gamepad --mnet"
+./eval.sh gamepad          # terminal 2 stays ./eval.sh client
 ```
 
-VR cannot run inside a container; a VR-scored run would require a native
-ROS 2 environment next to the native sim (not packaged — community
-testing).
+**Evaluating with VR** is not possible through the Docker route — no
+container can reach a headset. A VR-scored run would need ROS 2 inside the
+native environment (e.g., RoboStack) so the native sim can run
+`--input vr --mnet` while the client stays in Docker; this path is not yet
+packaged or validated. If your team wants VR-scored runs, please open an
+issue so it gets prioritized.
 
 ## Teleoperation options
 

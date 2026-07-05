@@ -97,6 +97,28 @@ services:
       bash -lc "source /opt/ros/humble/setup.bash && source /ws/install/setup.bash
       && python3 main.py --input keyboard --mnet"
 
+  # gamepad-driven eval: same as sim but with the pad passed through.
+  # Native Linux only (WSL2 has no /dev/input passthrough) — started by
+  # `./eval.sh gamepad`, fails fast elsewhere by design.
+  sim-gamepad:
+    image: duo-teleop-eval:latest
+    network_mode: host
+    ipc: host
+    stdin_open: true
+    tty: true
+    environment:
+      - DISPLAY=${DISPLAY:-:0}
+      - MESA_D3D12_DEFAULT_ADAPTER_NAME=${MESA_D3D12_DEFAULT_ADAPTER_NAME:-}
+      - NVIDIA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES:-all}
+      - NVIDIA_DRIVER_CAPABILITIES=${NVIDIA_DRIVER_CAPABILITIES:-all}
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    devices:
+      - /dev/input:/dev/input
+    command: >
+      bash -lc "source /opt/ros/humble/setup.bash && source /ws/install/setup.bash
+      && python3 main.py --input gamepad --mnet"
+
   client:
     image: duo-teleop-eval:latest
     network_mode: host

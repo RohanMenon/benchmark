@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # One-click ManipulationNet eval stack (Docker), Ubuntu / WSL2:
 #   ./eval.sh sim      # build (first run) + start the simulator with --mnet
+#   ./eval.sh gamepad  # same, driven by a gamepad (native Linux only)
 #   ./eval.sh client   # in a SECOND terminal: interactive mnet client
 #   ./eval.sh build    # rebuild the image only
 #   ./eval.sh down     # stop everything
@@ -34,9 +35,11 @@ if [ -n "$WSL_DISTRO_NAME" ] && [[ "$DISPLAY" == localhost:* ]]; then
 fi
 
 case "${1:-sim}" in
-    build)  "${COMPOSE[@]}" build ;;
-    sim)    "${COMPOSE[@]}" up --build sim ;;
-    client) "${COMPOSE[@]}" run --rm client ;;
-    down)   "${COMPOSE[@]}" down ;;
-    *) echo "usage: ./eval.sh [sim|client|build|down]"; exit 1 ;;
+    build)   "${COMPOSE[@]}" build ;;
+    sim)     "${COMPOSE[@]}" up --build sim ;;
+    # gamepad passthrough only exists on native Linux (not WSL2)
+    gamepad) "${COMPOSE[@]}" build sim && "${COMPOSE[@]}" run --rm sim-gamepad ;;
+    client)  "${COMPOSE[@]}" run --rm client ;;
+    down)    "${COMPOSE[@]}" down ;;
+    *) echo "usage: ./eval.sh [sim|gamepad|client|build|down]"; exit 1 ;;
 esac
