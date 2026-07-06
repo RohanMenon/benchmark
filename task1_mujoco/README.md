@@ -52,7 +52,7 @@ physics, controls and IK are identical on both sides.
 | Scored eval — keyboard | ✅ native, no Docker ([appendix](#appendix--fully-docker-free-evaluation-windows-robostack)) | ✅ `./eval.sh sim` + `client` |
 | Scored eval — gamepad | ✅ native ([appendix](#appendix--fully-docker-free-evaluation-windows-robostack)) | ✅ `./eval.sh gamepad` + `client` |
 | Scored eval — VR | ⚠️ community testing (native, same appendix) | ✅ native sim + Docker client ([recipe](#quick-start--the-scored-evaluation-docker-step-by-step)) |
-| GELLO (needs ROS 2) | ⚠️ untested (RoboStack ROS 2 works, appendix) | ✅ via the Docker image, or natively ([appendix](#appendix--fully-docker-free-evaluation-ubuntu)) |
+| GELLO (needs ROS 2) | ⚠️ untested (RoboStack ROS 2 works, appendix) | ⚠️ untested — Docker image or natively ([appendix](#appendix--fully-docker-free-evaluation-ubuntu)) |
 | Eval without Docker at all | ✅ verified ([appendix](#appendix--fully-docker-free-evaluation-windows-robostack)) | ⚠️ possible ([appendix](#appendix--fully-docker-free-evaluation-ubuntu)) |
 
 ## Architecture
@@ -498,8 +498,11 @@ Two Windows-specific fixes after building:
   that breaks the client's JSON parsing.
 - The client polls the keyboard with `select.select()` on stdin, which is
   POSIX-only and crashes on Windows (`WinError 10038`). Until upstream
-  ships a fix, replace those calls (3 sites in the built copy under
-  `ros_ws\install\...\clients\`) with an `msvcrt.kbhit()` check.
+  ships a fix, guard those calls with `msvcrt.kbhit()` on Windows: 3 call
+  sites in `local_test_client.py` (built copy lives under
+  `ros_ws\install\Lib\site-packages\mnet_client\clients\`; re-apply after
+  any rebuild). `submission_client.py` polls the same way — apply the same
+  fix there before a real submission run.
 
 **2. Run the eval** (two terminals, both via the wrapper):
 
@@ -523,7 +526,7 @@ Remove-Item $env:TEMP\fastrtps_* -Force -EA 0
   held keys will cut out; the message names the cause. Usually python-xlib
   is missing (the launcher auto-installs it on the next run) or the session
   has no X server.
-- **`[mnet] WARNING: evidence camera at N fps`** — the camera process
+- **`[mnet] WARNING: evidence camera publishing at N fps`** — the camera process
   cannot reach the client's 25 fps minimum (it will refuse the session).
   Typical cause: WSL2 or a container without GPU access. Run the eval on
   native Linux, or enable the GPU blocks in `release/compose.yaml` — for
