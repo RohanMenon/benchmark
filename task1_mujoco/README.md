@@ -78,9 +78,10 @@ physics, controls and IK are identical on both sides.
          grasping   (gello is the exception: joint-space 1:1, no IK)
 
  evaluation stack (Docker, ./eval.sh)
-   official mnet client ◄── /mujoco/camera/image_raw   (fixed overhead camera)
-                        ◄── F / H completion reports
-                        ──► fixture randomization, one-time code
+   official mnet client ◄── /mujoco/camera/image_raw   (fixed overhead camera —
+                        ◄── F / H completion reports    rendered+published by a
+                        ──► fixture randomization,      dedicated process at a
+                            one-time code               constant 30 fps)
 ```
 
 ## Directory layout
@@ -92,6 +93,7 @@ teleop_ros2/                           ROS 2 teleop publisher packages (keyboard
 start.bat / start.sh                   native practice launchers (Windows / Ubuntu)
 eval.sh                                scored ManipulationNet evaluation (Docker + ROS 2)
 docker-run.sh                          ROS-free Docker teleop (installation-free practice)
+ros_native.bat                         Windows ROS 2 (RoboStack) command wrapper (see appendix)
 ```
 
 ## Prerequisites
@@ -102,7 +104,8 @@ docker-run.sh                          ROS-free Docker teleop (installation-free
   native Linux** (or a 3D-accelerated VM) — WSL2's software rendering
   cannot reach the evidence camera's required 25 fps; the client refuses
   lower rates and the sim warns you within ~15 s. X11 for the viewer:
-  `xhost +local:docker` once per login session.
+  `xhost +local:docker` once per login session. On Windows, skip Docker and
+  use the native evaluation (appendix below) — verified end-to-end.
 - **VR only**: an OpenXR headset and runtime (see VR setup below).
 - **GELLO only**: the physical GELLO Duo plus the
   [teleoperation](https://github.com/EBiM-Benchmark/teleoperation) repo's
@@ -453,8 +456,65 @@ source /opt/ros/humble/setup.bash && source ~/mnet_ws/install/setup.bash
 ros2 run mnet_client local_test
 ```
 
-The session flow is identical to the Docker walkthrough. Neither half has
-been validated end-to-end natively yet — reports welcome.
+The session flow is identical to the Docker walkthrough. This Ubuntu recipe
+is community testing (the same two-halves stack is verified end-to-end on
+Windows below) — reports welcome.
+
+## Appendix — fully Docker-free evaluation (Windows, RoboStack)
+
+Verified end-to-end: scored session completed with the evidence camera at
+a constant 30 fps (the camera renders and publishes from its own process,
+so viewer load does not affect it). ROS 2 Humble on Windows comes from
+[RoboStack](https://robostack.github.io/) — one conda env runs both halves:
+
+```bat
+conda create -n ros-humble --override-channels -c robostack-staging -c conda-forge ^
+    python=3.11 ros-humble-ros-base ros-humble-cv-bridge colcon-common-extensions
+conda run -n ros-humble pip install mujoco==3.9.0 "numpy>=1.24,<2" glfw==2.10.0 ^
+    pygame==2.6.1 "pillow>=10" pyopenxr==1.1.5301 PyOpenGL==3.1.10 openvr==2.12.1401 ^
+    opencv-python "pydantic>=2,<3" requests tqdm pupil-apriltags pybullet
+```
+
+Every ROS command below goes through `ros_native.bat` (repo root). It exists
+because other installed software (base conda, Docker, Git) ships same-named
+older DLLs that shadow RoboStack's and break `rclpy` on import — the wrapper
+rebuilds a minimal `PATH`, applies the ROS env, and injects the shared-memory
+Fast DDS profile (`release/fastdds_shm.xml`; Windows UDP loopback cannot
+sustain reliable ~1 MB camera frames).
+
+**1. Build the client once** (a real copy, not a junction — colcon fails
+through junctions):
+
+```bat
+xcopy /E /I mnet_client-ros_2 ros_ws\src\mnet_client
+cd ros_ws & ..\ros_native.bat colcon build & cd ..
+```
+
+Two Windows-specific fixes after building:
+
+- `team_config.json` (`ros_ws\install\share\mnet_client\config\`): set
+  `file_dir` to a writable local directory. Edit it with a plain-text
+  editor or Python — PowerShell's `Out-File`/`Set-Content` writes a BOM
+  that breaks the client's JSON parsing.
+- The client polls the keyboard with `select.select()` on stdin, which is
+  POSIX-only and crashes on Windows (`WinError 10038`). Until upstream
+  ships a fix, replace those calls (3 sites in the built copy under
+  `ros_ws\install\...\clients\`) with an `msvcrt.kbhit()` check.
+
+**2. Run the eval** (two terminals, both via the wrapper):
+
+```bat
+ros_native.bat python robotiq_duo_full_scene_minimal_core\main.py --input keyboard --mnet
+ros_native.bat ros2 run mnet_client local_test
+```
+
+Before each run, clear leftovers from previous force-killed sessions —
+they silently degrade the camera stream (see Troubleshooting):
+
+```powershell
+Get-Process python -EA 0 | ? { $_.Path -like '*ros-humble*' } | Stop-Process -Force
+Remove-Item $env:TEMP\fastrtps_* -Force -EA 0
+```
 
 ## Troubleshooting
 
@@ -463,11 +523,22 @@ been validated end-to-end natively yet — reports welcome.
   held keys will cut out; the message names the cause. Usually python-xlib
   is missing (the launcher auto-installs it on the next run) or the session
   has no X server.
-- **`[mnet] WARNING: evidence camera at N fps`** — your rendering cannot
-  reach the client's 25 fps minimum (it will refuse the session). Typical
-  cause: WSL2 or a container without GPU access. Run the eval on native
-  Linux, or enable the GPU blocks in `release/compose.yaml`
-  (nvidia-container-toolkit).
+- **`[mnet] WARNING: evidence camera at N fps`** — the camera process
+  cannot reach the client's 25 fps minimum (it will refuse the session).
+  Typical cause: WSL2 or a container without GPU access. Run the eval on
+  native Linux, or enable the GPU blocks in `release/compose.yaml` — for
+  **both** the `sim` and `sim-gamepad` services (nvidia-container-toolkit).
+- **Client reports low camera FPS while the sim shows none of the warnings
+  above** — stale Fast DDS state from previous force-killed runs silently
+  degrades delivery (the publisher runs at 30 fps, subscribers receive ~5).
+  Kill leftover sim/client Python processes and delete the orphaned
+  shared-memory segments: `%TEMP%\fastrtps_*` on Windows (they are
+  disk-backed — **a reboot does not remove them**), `/dev/shm/fastrtps_*`
+  on Linux. The Windows appendix has a copy-paste cleanup.
+- **`DLL load failed while importing _rclpy_pybind11`** (Windows,
+  RoboStack) — another installed program's directory on `PATH` shadows
+  RoboStack's DLLs with older same-named copies. Run everything through
+  `ros_native.bat`, which rebuilds a minimal `PATH` first.
 - **"OpenGL version 1.5 or higher required"** (WSL2) — usually a stale
   `LIBGL_ALWAYS_INDIRECT=1` or a manual `DISPLAY=<ip>:0` left in `~/.bashrc`
   from old X-server setups: remove them (WSLg sets `DISPLAY` itself). Then
